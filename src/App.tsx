@@ -3,14 +3,7 @@ import { CRM } from './root/CRM';
 const App = () => (
   <CRM
     title=" "
-    logo="./img/logo.svg" // The logo path is relative to the public directory
-    lightTheme={{
-      palette: {
-        primary: { main: '#384677' },
-        background: { default: '#f6f8fa' },
-        text: { primary: '#7c8990', secondary: '#272e41' },
-      },
-    }}
+    logo="./img/logo.svg" // Ensure this file exists in /public/img/
     noteStatuses={[
       { value: 'cold', label: 'Cold', color: '#32a3fd' },
       { value: 'warm', label: 'Warm', color: '#7dc81b' },
