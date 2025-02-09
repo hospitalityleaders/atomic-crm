@@ -3,7 +3,7 @@ import { CRM } from './root/CRM';
 const App = () => (
   <CRM
     title=" "
-    logo="./img/logo.svg" // Ensure this file exists in /public/img/
+    logo="/img/logo.svg" // Ensure this file exists in /public/img/
     noteStatuses={[
       { value: 'cold', label: 'Cold', color: '#32a3fd' },
       { value: 'warm', label: 'Warm', color: '#7dc81b' },
