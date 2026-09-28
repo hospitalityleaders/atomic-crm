@@ -11,6 +11,7 @@
 # testing
 /coverage
 __screenshots__
+/.vitest-attachments/
 
 # production
 /build
@@ -57,4 +58,3 @@ node_modules/
 /playwright/.auth/
 
 *.lock
- 

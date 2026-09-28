@@ -1,156 +1,178 @@
-import { useEffect, useRef, useState } from "react";
-import { Form, required, useLogin, useNotify, useTranslate } from "ra-core";
-import type { SubmitHandler, FieldValues } from "react-hook-form";
-import { Link, useLocation, useNavigate } from "react-router";
-import { Button } from "@/components/ui/button";
-import { TextInput } from "@/components/admin/text-input";
-import { Notification } from "@/components/admin/notification";
-import { useConfigurationContext } from "@/components/atomic-crm/root/ConfigurationContext.tsx";
-import { SSOAuthButton } from "./SSOAuthButton";
 import {
-  disableEmailPasswordAuthentication,
-  googleWorkplaceDomain,
-} from "./authConfig";
+  ArrowRight,
+  Building2,
+  MessagesSquare,
+  UsersRound,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Notification } from "@/components/admin/notification";
 
-/**
- * Login page displayed when authentication is enabled and the user is not authenticated.
- *
- * Automatically shown when an unauthenticated user tries to access a protected route.
- * Handles login via authProvider.login() and displays error notifications on failure.
- *
- * @see {@link https://marmelab.com/shadcn-admin-kit/docs/loginpage LoginPage documentation}
- * @see {@link https://marmelab.com/shadcn-admin-kit/docs/security Security documentation}
- */
-export const LoginPage = (props: { redirectTo?: string }) => {
-  const { darkModeLogo, title } = useConfigurationContext();
-  const { redirectTo } = props;
-  const [loading, setLoading] = useState(false);
-  const hasDisplayedRecoveryNotification = useRef(false);
-  const location = useLocation();
-  const navigate = useNavigate();
-  const login = useLogin();
-  const notify = useNotify();
-  const translate = useTranslate();
+type PublicRuntime = {
+  landing_headline: string;
+  landing_subtitle: string;
+  privacy_url: string;
+  terms_url: string;
+  imprint_url: string;
+};
 
+export const LoginPage = ({ redirectTo = "/" }: { redirectTo?: string }) => {
+  const returnTo = encodeURIComponent(redirectTo);
+  const [runtime, setRuntime] = useState<PublicRuntime>({
+    landing_headline: "Track sales and customer conversations",
+    landing_subtitle:
+      "Keep leads, deals and every customer conversation together in one clear workspace built for hospitality teams.",
+    privacy_url: "https://www.iubenda.com/privacy-policy/84980546",
+    terms_url: "https://www.iubenda.com/terms-and-conditions/84980546",
+    imprint_url: "https://www.holedo.com/imprint/",
+  });
   useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const shouldNotify = searchParams.get("passwordRecoveryEmailSent") === "1";
-
-    if (!shouldNotify || hasDisplayedRecoveryNotification.current) {
-      return;
-    }
-
-    hasDisplayedRecoveryNotification.current = true;
-    notify("crm.auth.recovery_email_sent", {
-      type: "success",
-      messageArgs: {
-        _: "If you're a registered user, you should receive a password recovery email shortly.",
-      },
-    });
-
-    searchParams.delete("passwordRecoveryEmailSent");
-    const nextSearch = searchParams.toString();
-    navigate(
-      {
-        pathname: location.pathname,
-        search: nextSearch ? `?${nextSearch}` : "",
-      },
-      { replace: true },
-    );
-  }, [location.pathname, location.search, navigate, notify]);
-
-  const handleSubmit: SubmitHandler<FieldValues> = (values) => {
-    setLoading(true);
-    login(values, redirectTo)
-      .then(() => {
-        setLoading(false);
-      })
-      .catch((error) => {
-        setLoading(false);
-        notify(
-          typeof error === "string"
-            ? error
-            : typeof error === "undefined" || !error.message
-              ? "ra.auth.sign_in_error"
-              : error.message,
-          {
-            type: "error",
-            messageArgs: {
-              _:
-                typeof error === "string"
-                  ? error
-                  : error && error.message
-                    ? error.message
-                    : undefined,
-            },
-          },
-        );
-      });
-  };
-
+    fetch("/api/runtime")
+      .then((response) => response.json())
+      .then((data) => setRuntime((current) => ({ ...current, ...data })))
+      .catch(() => undefined);
+  }, []);
   return (
-    <div className="min-h-screen flex">
-      <div className="relative grid w-full lg:grid-cols-2">
-        <div className="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r lg:flex">
-          <div className="absolute inset-0 bg-zinc-900" />
-          <div className="relative z-20 flex items-center text-lg font-medium">
-            <img className="h-6 mr-2" src={darkModeLogo} alt={title} />
-            {title}
-          </div>
+    <main className="min-h-screen bg-white text-[#26324a]">
+      <header className="border-b border-white/10 bg-[#384677] text-white">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-10">
+          <a href="/" className="flex items-center gap-3">
+            <img
+              src="/assets/branding/1gc-holedo-icon-for-dark-bg.png"
+              alt="Holedo"
+              className="h-9 w-9 object-contain"
+            />
+            <span className="text-xl font-semibold tracking-tight">
+              Holedo CRM
+            </span>
+          </a>
+          <nav className="flex items-center gap-3">
+            <a
+              href={`/auth/login?returnTo=${returnTo}`}
+              className="rounded-md px-4 py-2 text-sm font-semibold text-white/90 hover:bg-white/10 hover:text-white"
+            >
+              Sign in
+            </a>
+            <a
+              href={`/auth/register?returnTo=${returnTo}`}
+              className="rounded-md bg-[#7dc81b] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#70b918]"
+            >
+              Get started
+            </a>
+          </nav>
         </div>
-        <div className="flex flex-col justify-center w-full p-4 lg:p-8">
-          <div className="w-full space-y-6 lg:mx-auto lg:w-[350px]">
-            <div className="text-center">
-              <h1 className="text-2xl font-semibold tracking-tight">
-                {translate("ra.auth.sign_in")}
-              </h1>
-            </div>
-            {disableEmailPasswordAuthentication ? null : (
-              <Form className="space-y-8" onSubmit={handleSubmit}>
-                <TextInput
-                  label="ra.auth.email"
-                  source="email"
-                  type="email"
-                  validate={required()}
-                />
-                <TextInput
-                  label="ra.auth.password"
-                  source="password"
-                  type="password"
-                  validate={required()}
-                />
-                <div className="flex flex-col gap-4">
-                  <Button
-                    type="submit"
-                    className="cursor-pointer"
-                    disabled={loading}
-                  >
-                    {translate("ra.auth.sign_in")}
-                  </Button>
-                </div>
-              </Form>
-            )}
-            {googleWorkplaceDomain ? (
-              <SSOAuthButton className="w-full" domain={googleWorkplaceDomain}>
-                {translate("crm.auth.sign_in_google_workspace", {
-                  _: "Sign in with Google Workplace",
-                })}
-              </SSOAuthButton>
-            ) : null}
-            {disableEmailPasswordAuthentication ? null : (
-              <Link
-                to={"/forgot-password"}
-                className="block text-sm text-center hover:underline"
+      </header>
+
+      <section className="relative overflow-hidden bg-[#384677] text-white">
+        <div className="absolute inset-0 opacity-20 [background-image:radial-gradient(circle_at_75%_30%,#32a3fd_0,transparent_38%)]" />
+        <div className="relative mx-auto grid max-w-7xl gap-14 px-6 py-20 lg:grid-cols-[1.05fr_.95fr] lg:px-10 lg:py-28">
+          <div className="max-w-3xl">
+            <p className="mb-5 text-sm font-semibold uppercase tracking-[0.22em] text-[#7dc81b]">
+              Holedo CRM
+            </p>
+            <h1 className="text-5xl font-bold leading-[1.06] tracking-tight sm:text-6xl">
+              {runtime.landing_headline}
+            </h1>
+            <p className="mt-7 max-w-2xl text-xl leading-8 text-white/76">
+              {runtime.landing_subtitle}
+            </p>
+            <div className="mt-10 flex flex-wrap gap-4">
+              <a
+                href={`/auth/register?returnTo=${returnTo}`}
+                className="inline-flex items-center gap-2 rounded-md bg-[#7dc81b] px-6 py-3.5 font-semibold text-white shadow-lg shadow-black/10 transition-colors hover:bg-[#70b918]"
               >
-                {translate("ra-supabase.auth.forgot_password", {
-                  _: "Forgot password?",
-                })}
-              </Link>
-            )}
+                Create your workspace <ArrowRight className="h-4 w-4" />
+              </a>
+              <a
+                href={`/auth/login?returnTo=${returnTo}`}
+                className="rounded-md border border-white/30 px-6 py-3.5 font-semibold text-white hover:bg-white/10"
+              >
+                Sign in to CRM
+              </a>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-white/15 bg-white/10 p-5 shadow-2xl backdrop-blur-sm">
+            <div className="rounded-lg bg-[#f3f5f9] p-5 text-[#26324a]">
+              <div className="mb-4 flex items-center justify-between">
+                <span className="font-semibold">Sales pipeline</span>
+                <span className="rounded-full bg-[#e9f7d7] px-3 py-1 text-xs font-semibold text-[#4f8410]">
+                  12 active
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                {["New lead", "Proposal", "Accepted"].map((stage, index) => (
+                  <div
+                    key={stage}
+                    className="rounded-md bg-white p-3 shadow-sm"
+                  >
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#758099]">
+                      {stage}
+                    </p>
+                    {[0, 1].slice(0, index === 2 ? 1 : 2).map((card) => (
+                      <div
+                        key={card}
+                        className="mb-2 rounded border border-[#e0e5ed] p-2 last:mb-0"
+                      >
+                        <div className="h-2 w-4/5 rounded bg-[#cbd3df]" />
+                        <div className="mt-2 h-2 w-1/2 rounded bg-[#e5e9ef]" />
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-5 border-t-2 border-[#fd3732] pt-3 text-center text-xs font-semibold uppercase tracking-wider text-[#fd3732]">
+                Archived deals stay in context
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
+
+      <section className="mx-auto grid max-w-7xl gap-8 px-6 py-16 md:grid-cols-3 lg:px-10">
+        {[
+          [
+            UsersRound,
+            "Your own workspace",
+            "Every Holedo member gets a private CRM workspace from their first sign-in.",
+          ],
+          [
+            Building2,
+            "One shared company",
+            "Companies can work together in a shared workspace with clear member roles.",
+          ],
+          [
+            MessagesSquare,
+            "Conversation context",
+            "Keep every note, task and deal stage connected to the relationship.",
+          ],
+        ].map(([Icon, title, copy]) => {
+          const FeatureIcon = Icon as typeof UsersRound;
+          return (
+            <article
+              key={String(title)}
+              className="rounded-lg border border-[#e2e7ef] p-7 shadow-sm"
+            >
+              <FeatureIcon className="mb-5 h-8 w-8 text-[#32a3fd]" />
+              <h2 className="text-xl font-semibold">{String(title)}</h2>
+              <p className="mt-3 leading-7 text-[#68748a]">{String(copy)}</p>
+            </article>
+          );
+        })}
+      </section>
+      <footer className="border-t border-[#e2e7ef] px-6 py-8 text-center text-sm text-[#68748a]">
+        <div className="flex justify-center gap-6">
+          <a href={runtime.privacy_url} className="hover:text-[#32a3fd]">
+            Privacy
+          </a>
+          <a href={runtime.terms_url} className="hover:text-[#32a3fd]">
+            Terms
+          </a>
+          <a href={runtime.imprint_url} className="hover:text-[#32a3fd]">
+            Imprint
+          </a>
+        </div>
+      </footer>
       <Notification />
-    </div>
+    </main>
   );
 };

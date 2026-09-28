@@ -10,7 +10,6 @@ import {
   useRedirect,
   useRefresh,
   useTranslate,
-  useUpdate,
 } from "ra-core";
 import { DeleteButton } from "@/components/admin/delete-button";
 import { EditButton } from "@/components/admin/edit-button";
@@ -26,6 +25,7 @@ import { NoteCreate } from "../notes/NoteCreate";
 import { NotesIterator } from "../notes/NotesIterator";
 import { useConfigurationContext } from "../root/ConfigurationContext";
 import type { Deal } from "../types";
+import type { CrmDataProvider } from "../providers/types";
 import { ContactList } from "./ContactList";
 import { findDealLabel, formatISODateString } from "./dealUtils";
 
@@ -199,34 +199,25 @@ const ArchivedTitle = () => {
 
 const ArchiveButton = ({ record }: { record: Deal }) => {
   const translate = useTranslate();
-  const [update] = useUpdate();
+  const dataProvider = useDataProvider<CrmDataProvider>();
   const redirect = useRedirect();
   const notify = useNotify();
   const refresh = useRefresh();
   const handleClick = () => {
-    update(
-      "deals",
-      {
-        id: record.id,
-        data: { archived_at: new Date().toISOString() },
-        previousData: record,
-      },
-      {
-        onSuccess: () => {
-          redirect("list", "deals");
-          notify("resources.deals.archived.success", {
-            type: "info",
-            undoable: false,
-          });
-          refresh();
-        },
-        onError: () => {
-          notify("resources.deals.archived.error", {
-            type: "error",
-          });
-        },
-      },
-    );
+    dataProvider.archiveDeal!(record)
+      .then(() => {
+        redirect("list", "deals");
+        notify("resources.deals.archived.success", {
+          type: "info",
+          undoable: false,
+        });
+        refresh();
+      })
+      .catch(() => {
+        notify("resources.deals.archived.error", {
+          type: "error",
+        });
+      });
   };
 
   return (
@@ -244,7 +235,7 @@ const ArchiveButton = ({ record }: { record: Deal }) => {
 
 const UnarchiveButton = ({ record }: { record: Deal }) => {
   const translate = useTranslate();
-  const dataProvider = useDataProvider();
+  const dataProvider = useDataProvider<CrmDataProvider>();
   const redirect = useRedirect();
   const notify = useNotify();
   const refresh = useRefresh();

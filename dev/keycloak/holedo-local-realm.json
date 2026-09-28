@@ -1,0 +1,67 @@
+{
+  "realm": "holedo-local",
+  "displayName": "Holedo Local",
+  "enabled": true,
+  "registrationAllowed": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "rememberMe": true,
+  "roles": {
+    "realm": [{ "name": "holedo-platform-admin" }]
+  },
+  "clients": [
+    {
+      "clientId": "holedo-crm",
+      "name": "Holedo CRM Local",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${OIDC_CLIENT_SECRET}",
+      "redirectUris": [
+        "http://localhost:5173/auth/callback",
+        "http://localhost:3000/auth/callback"
+      ],
+      "webOrigins": ["http://localhost:5173", "http://localhost:3000"],
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "frontchannelLogout": true,
+      "attributes": {
+        "backchannel.logout.url": "http://host.docker.internal:3000/auth/backchannel-logout",
+        "backchannel.logout.session.required": "true"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "crm.owner@local.holedo.test",
+      "email": "crm.owner@local.holedo.test",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "CRM",
+      "lastName": "Owner",
+      "realmRoles": ["holedo-platform-admin"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KEYCLOAK_TEST_USER_PASSWORD}",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "crm.colleague@local.holedo.test",
+      "email": "crm.colleague@local.holedo.test",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "CRM",
+      "lastName": "Colleague",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KEYCLOAK_TEST_COLLEAGUE_PASSWORD}",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}
