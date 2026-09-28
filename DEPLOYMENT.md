@@ -2,6 +2,59 @@
 
 Holedo CRM is a stateless web/API container backed by Keycloak, PostgreSQL and S3-compatible object storage. There is no legacy-data migration: deploy to a new empty database and let `npm start` apply the schema before starting the API.
 
+## Docker-server rollout
+
+Merges to `main` publish `ghcr.io/hospitalityleaders/atomic-crm:latest`. Every published image also receives an immutable `sha-<commit>` tag. The server Compose file runs the application as an unprivileged user with a read-only filesystem, dropped Linux capabilities, bounded logs, a health check and automatic restart.
+
+On the Docker server:
+
+```sh
+mkdir -p /opt/holedo-crm
+cd /opt/holedo-crm
+curl -O https://raw.githubusercontent.com/hospitalityleaders/atomic-crm/main/compose.server.yml
+curl -o .env.server https://raw.githubusercontent.com/hospitalityleaders/atomic-crm/main/.env.server.example
+chmod 600 .env.server
+```
+
+Fill in `.env.server`, then deploy:
+
+```sh
+docker compose --env-file .env.server -f compose.server.yml config --quiet
+docker compose --env-file .env.server -f compose.server.yml pull
+docker compose --env-file .env.server -f compose.server.yml up -d
+docker compose --env-file .env.server -f compose.server.yml ps
+```
+
+If the GitHub package is private, authenticate the server once with a GitHub token that has `read:packages` before running `pull`:
+
+```sh
+docker login ghcr.io -u YOUR_GITHUB_USERNAME
+```
+
+The container binds to `127.0.0.1:3000` by default. Point the server's existing TLS reverse proxy at that address and preserve `Host`, `X-Forwarded-Proto` and `X-Forwarded-For`. The public address must exactly match `APP_ORIGIN`, the Keycloak redirect URI and the Keycloak client's allowed redirect URI.
+
+Example Caddy route:
+
+```caddyfile
+crm.holedo.com {
+  reverse_proxy 127.0.0.1:3000
+}
+```
+
+Example Nginx location inside the TLS-enabled virtual host:
+
+```nginx
+location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    client_max_body_size 10m;
+}
+```
+
+For a controlled upgrade, replace `latest` in `HOLEDO_CRM_IMAGE` with an immutable `sha-<commit>` tag, run `pull`, then `up -d` again. Rollback uses the same process with the previous SHA tag. PostgreSQL migrations are forward-only, so take or verify an UpCloud database restore point before each production upgrade.
+
 ## Database requirements
 
 Use a dedicated UpCloud Managed PostgreSQL database and two credentials:
@@ -77,3 +130,11 @@ ALLOW_SELF_SERVICE_COMPANY_WORKSPACES=false
 - Start: `npm start`
 
 Run one migration job during rollout or allow the first replica to take the PostgreSQL advisory lock. Keep at least two application replicas behind TLS termination after the initial launch. Sessions are stored in PostgreSQL, so no sticky load balancing is required.
+
+Startup validates required URLs, credentials and secrets before applying migrations. Useful server checks are:
+
+```sh
+curl --fail https://crm.holedo.com/api/health
+curl --fail https://crm.holedo.com/api/ready
+docker compose --env-file .env.server -f compose.server.yml logs --tail=200 crm
+```

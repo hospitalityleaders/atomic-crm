@@ -3,7 +3,7 @@
 .claude
 node_modules
 dist
-.env
+.env*
 work
 coverage
 playwright-report

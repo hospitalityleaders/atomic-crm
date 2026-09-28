@@ -31,6 +31,23 @@ services:
       - holedo-crm-keycloak:/opt/keycloak/data
       - ./dev/keycloak/holedo-local-realm.json:/opt/keycloak/data/import/holedo-local-realm.json:ro
 
+  keycloak-configure:
+    image: quay.io/keycloak/keycloak:26.7.4
+    depends_on:
+      keycloak:
+        condition: service_started
+    environment:
+      KEYCLOAK_ADMIN_USERNAME: admin
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-local-keycloak-admin}
+      KEYCLOAK_TEST_USER_EMAIL: ${KEYCLOAK_TEST_USER_EMAIL:-crm.owner@local.holedo.test}
+      KEYCLOAK_TEST_USER_PASSWORD: ${KEYCLOAK_TEST_USER_PASSWORD:-local-holedo-owner}
+      KEYCLOAK_TEST_COLLEAGUE_EMAIL: ${KEYCLOAK_TEST_COLLEAGUE_EMAIL:-crm.colleague@local.holedo.test}
+      KEYCLOAK_TEST_COLLEAGUE_PASSWORD: ${KEYCLOAK_TEST_COLLEAGUE_PASSWORD:-local-holedo-colleague}
+    volumes:
+      - ./dev/keycloak/configure-local.sh:/opt/keycloak/configure-local.sh:ro
+    entrypoint: ["/bin/sh", "/opt/keycloak/configure-local.sh"]
+    restart: "no"
+
   object-storage:
     image: chrislusf/seaweedfs:latest
     command:

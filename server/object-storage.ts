@@ -106,6 +106,11 @@ export async function getFileUrl(session: CrmSession, fileId: string) {
       ResponseContentDisposition: `inline; filename*=UTF-8''${encodeURIComponent(file.filename)}`,
       ResponseContentType: file.mime_type,
     }),
-    { expiresIn: 300 },
+    {
+      expiresIn: Math.max(
+        60,
+        Number(process.env.S3_SIGNED_URL_TTL_SECONDS ?? 300),
+      ),
+    },
   );
 }

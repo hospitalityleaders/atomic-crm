@@ -29,7 +29,14 @@ const app = express();
 const port = Number(process.env.PORT ?? 3000);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-app.set("trust proxy", 1);
+function trustProxySetting() {
+  const value = String(process.env.TRUST_PROXY ?? "1").trim();
+  if (["0", "false", "off"].includes(value.toLowerCase())) return false;
+  if (/^\d+$/.test(value)) return Number(value);
+  return value;
+}
+
+app.set("trust proxy", trustProxySetting());
 
 app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
 app.get("/api/ready", async (_req, res) => {
@@ -189,9 +196,33 @@ app.use(
 
 ensureStorageBucket()
   .then(() => {
-    app.listen(port, () => {
+    const server = app.listen(port, () => {
       console.warn(`Holedo CRM listening on http://localhost:${port}`);
     });
+
+    let shuttingDown = false;
+    const shutdown = (signal: string) => {
+      if (shuttingDown) return;
+      shuttingDown = true;
+      console.warn(`${signal} received; shutting down Holedo CRM`);
+      const forcedExit = setTimeout(() => {
+        console.error("Graceful shutdown timed out");
+        process.exit(1);
+      }, 10_000);
+      forcedExit.unref();
+      server.close(async (error) => {
+        clearTimeout(forcedExit);
+        await db.end().catch(() => undefined);
+        if (error) {
+          console.error("HTTP server shutdown failed", error);
+          process.exit(1);
+        }
+        process.exit(0);
+      });
+    };
+
+    process.once("SIGTERM", () => shutdown("SIGTERM"));
+    process.once("SIGINT", () => shutdown("SIGINT"));
   })
   .catch((error) => {
     console.error("Object storage initialization failed", error);

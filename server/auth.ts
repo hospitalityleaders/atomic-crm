@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import type { Request, Response } from "express";
-import { createRemoteJWKSet, jwtVerify } from "jose";
+import { createRemoteJWKSet, decodeJwt, jwtVerify } from "jose";
 import * as oidc from "openid-client";
 import { db } from "./db.js";
 import { ensureWorkspaceSale, seedWorkspace } from "./workspaces.js";
@@ -119,10 +119,16 @@ export function oidcConfigured() {
 
 async function oidcConfiguration() {
   if (!oidcConfigured()) throw new Error("OIDC is not configured");
+  const allowInsecureRequests =
+    process.env.OIDC_ALLOW_INSECURE_HTTP === "true"
+      ? { execute: [oidc.allowInsecureRequests] }
+      : undefined;
   configurationPromise ??= oidc.discovery(
     new URL(process.env.OIDC_ISSUER_URL!),
     process.env.OIDC_CLIENT_ID!,
     process.env.OIDC_CLIENT_SECRET!,
+    undefined,
+    allowInsecureRequests,
   );
   return configurationPromise;
 }
@@ -209,7 +215,12 @@ export async function completeOidcLogin(req: Request, res: Response) {
       displayName.split(/\s+/).slice(1).join(" ") ||
       "member",
   ).slice(0, 80);
-  const realmAccess = claims.realm_access as { roles?: unknown[] } | undefined;
+  const accessClaims = tokens.access_token
+    ? decodeJwt(tokens.access_token)
+    : undefined;
+  const realmAccess = (claims.realm_access ?? accessClaims?.realm_access) as
+    | { roles?: unknown[] }
+    | undefined;
   const platformAdmin = (realmAccess?.roles ?? [])
     .map(String)
     .includes(process.env.PLATFORM_ADMIN_ROLE || "holedo-platform-admin");

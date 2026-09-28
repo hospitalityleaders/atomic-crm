@@ -1,0 +1,39 @@
+name: holedo-crm
+
+services:
+  crm:
+    image: ${HOLEDO_CRM_IMAGE:-ghcr.io/hospitalityleaders/atomic-crm:latest}
+    env_file:
+      - ${HOLEDO_CRM_ENV_FILE:-.env.server}
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+    ports:
+      - "${HOLEDO_CRM_BIND_ADDRESS:-127.0.0.1}:${HOLEDO_CRM_PORT:-3000}:3000"
+    restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 15s
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "5"
