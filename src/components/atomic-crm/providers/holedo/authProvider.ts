@@ -31,19 +31,19 @@ export const getAuthProvider = (): AuthProvider => ({
   },
   logout: async () => {
     session = undefined;
-    window.location.assign("/auth/logout");
+    return "/";
   },
   checkAuth: async () => {
     try {
       await getSession();
     } catch {
-      throw { redirectTo: "/", message: false };
+      throw { redirectTo: `${window.location.origin}/`, message: false };
     }
   },
   checkError: async (error) => {
     if (error?.status === 401) {
       session = undefined;
-      throw { redirectTo: "/", message: false };
+      throw { redirectTo: `${window.location.origin}/`, message: false };
     }
   },
   getIdentity: async () => {

@@ -84,12 +84,12 @@ function parseCookies(req: Request) {
 }
 
 function cleanReturnTo(value: unknown) {
-  const candidate = String(value ?? "/");
+  const candidate = String(value ?? "/app");
   return candidate.startsWith("/") &&
     !candidate.startsWith("//") &&
     !candidate.startsWith("/auth/")
     ? candidate.slice(0, 1500)
-    : "/";
+    : "/app";
 }
 
 function callbackUrl() {

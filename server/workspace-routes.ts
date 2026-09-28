@@ -120,7 +120,9 @@ workspaceRouter.post("/:workspaceId/members", async (req, res) => {
     await client.query(
       `INSERT INTO crm_workspace_members
         (workspace_id, workspace_type, user_id, role, status)
-       VALUES ($1, 'company', $2, $3, 'active')`,
+       VALUES ($1, 'company', $2, $3, 'active')
+       ON CONFLICT (workspace_id, user_id) DO UPDATE
+         SET role = EXCLUDED.role, status = 'active', updated_at = NOW()`,
       [session.workspaceId, user.rows[0].id, role],
     );
     await client.query("SELECT set_config('app.workspace_id', $1, true)", [

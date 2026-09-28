@@ -5,7 +5,6 @@ import {
   UsersRound,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Notification } from "@/components/admin/notification";
 
 type PublicRuntime = {
   landing_headline: string;
@@ -15,7 +14,7 @@ type PublicRuntime = {
   imprint_url: string;
 };
 
-export const LoginPage = ({ redirectTo = "/" }: { redirectTo?: string }) => {
+export const LoginPage = ({ redirectTo = "/app" }: { redirectTo?: string }) => {
   const returnTo = encodeURIComponent(redirectTo);
   const [runtime, setRuntime] = useState<PublicRuntime>({
     landing_headline: "Track sales and customer conversations",
@@ -172,7 +171,6 @@ export const LoginPage = ({ redirectTo = "/" }: { redirectTo?: string }) => {
           </a>
         </div>
       </footer>
-      <Notification />
     </main>
   );
 };

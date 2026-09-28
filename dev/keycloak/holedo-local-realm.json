@@ -19,7 +19,9 @@
       "secret": "${OIDC_CLIENT_SECRET}",
       "redirectUris": [
         "http://localhost:5173/auth/callback",
-        "http://localhost:3000/auth/callback"
+        "http://localhost:3000/auth/callback",
+        "http://localhost:5173/",
+        "http://localhost:3000/"
       ],
       "webOrigins": ["http://localhost:5173", "http://localhost:3000"],
       "standardFlowEnabled": true,
@@ -27,7 +29,8 @@
       "frontchannelLogout": true,
       "attributes": {
         "backchannel.logout.url": "http://host.docker.internal:3000/auth/backchannel-logout",
-        "backchannel.logout.session.required": "true"
+        "backchannel.logout.session.required": "true",
+        "post.logout.redirect.uris": "+"
       }
     }
   ],

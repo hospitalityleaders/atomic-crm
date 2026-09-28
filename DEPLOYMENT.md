@@ -33,6 +33,8 @@ docker login ghcr.io -u YOUR_GITHUB_USERNAME
 
 The container binds to `127.0.0.1:3000` by default. Point the server's existing TLS reverse proxy at that address and preserve `Host`, `X-Forwarded-Proto` and `X-Forwarded-For`. The public address must exactly match `APP_ORIGIN`, the Keycloak redirect URI and the Keycloak client's allowed redirect URI.
 
+The public Holedo product page is `https://crm.holedo.com/`. The authenticated CRM is `https://crm.holedo.com/app`; it uses the CRM workspace header and avatar menu, not the public product-page menu bar. Proxy the whole origin because `/auth/*`, `/api/*`, static assets and `/app` are served by the same container.
+
 Example Caddy route:
 
 ```caddyfile
@@ -101,7 +103,7 @@ The object-store identity needs only `GetObject`, `PutObject`, `DeleteObject` an
 
 ## Keycloak and application values
 
-Create a confidential OIDC client with authorization-code flow, PKCE, the exact callback URI and back-channel logout. Production self-registration can be enabled or disabled in the Holedo realm independently of CRM.
+Create a confidential OIDC client with authorization-code flow, PKCE, the exact callback URI and back-channel logout. Add `https://crm.holedo.com/` to **Valid Post Logout Redirect URIs**. The avatar menu's **Log out** action clears the CRM session and calls Keycloak's OIDC end-session endpoint, ending the user's Holedo SSO session rather than signing out of CRM alone. Production self-registration can be enabled or disabled in the Holedo realm independently of CRM.
 
 ```dotenv
 NODE_ENV=production

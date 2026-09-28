@@ -1,4 +1,5 @@
 import { CRM } from "@/components/atomic-crm/root/CRM";
+import { LoginPage } from "@/components/atomic-crm/login/LoginPage";
 
 /**
  * Application entry point
@@ -31,6 +32,12 @@ import { CRM } from "@/components/atomic-crm/root/CRM";
  *    />
  * );
  */
-const App = () => <CRM />;
+const App = () => {
+  const isCrmApp =
+    window.location.pathname === "/app" ||
+    window.location.pathname.startsWith("/app/");
+
+  return isCrmApp ? <CRM /> : <LoginPage redirectTo="/app" />;
+};
 
 export default App;

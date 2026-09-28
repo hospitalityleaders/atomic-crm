@@ -88,7 +88,7 @@ const Header = () => {
                 <WorkspaceSwitcher />
                 <ThemeModeToggle />
                 <RefreshButton />
-                <UserMenu>
+                <UserMenu logoutHref="/auth/logout">
                   <ProfileMenu />
                   <CanAccess resource="sales" action="list">
                     <UsersMenu />

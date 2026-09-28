@@ -20,6 +20,14 @@ until "$KCADM" config credentials \
   sleep 2
 done
 
+client_id=$(
+  "$KCADM" get clients -r "$REALM" -q clientId=holedo-crm \
+    --fields id --format csv --noquotes
+)
+"$KCADM" update "clients/$client_id" -r "$REALM" \
+  -s 'redirectUris=["http://localhost:5173/auth/callback","http://localhost:3000/auth/callback","http://localhost:5173/","http://localhost:3000/"]' \
+  -s 'attributes={"backchannel.logout.url":"http://host.docker.internal:3000/auth/backchannel-logout","backchannel.logout.session.required":"true","post.logout.redirect.uris":"+"}'
+
 if ! "$KCADM" get "roles/$ROLE" -r "$REALM" >/dev/null 2>&1; then
   "$KCADM" create roles -r "$REALM" \
     -s "name=$ROLE" \
