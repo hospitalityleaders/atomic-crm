@@ -20,38 +20,44 @@ async function grantApplicationPrivileges(client: {
 }) {
   const applicationUser = process.env.DB_USER;
   const databaseName = process.env.DB_NAME;
+  const schemaName = process.env.DB_SCHEMA?.trim() || "public";
   if (!applicationUser || !databaseName) {
     throw new Error("DB_USER and DB_NAME are required for database grants");
   }
 
   const role = quoteIdentifier(applicationUser, "DB_USER");
   const database = quoteIdentifier(databaseName, "DB_NAME");
+  const schema = quoteIdentifier(schemaName, "DB_SCHEMA");
 
   await client.query(`GRANT CONNECT ON DATABASE ${database} TO ${role}`);
-  await client.query(`GRANT USAGE ON SCHEMA public TO ${role}`);
+  await client.query(`GRANT USAGE ON SCHEMA ${schema} TO ${role}`);
   await client.query(
-    `GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO ${role}`,
+    `GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA ${schema} TO ${role}`,
   );
   await client.query(
-    `GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO ${role}`,
+    `GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA ${schema} TO ${role}`,
   );
   await client.query(
-    `GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO ${role}`,
+    `GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA ${schema} TO ${role}`,
   );
   await client.query(
-    `ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ${role}`,
+    `ALTER DEFAULT PRIVILEGES IN SCHEMA ${schema} GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ${role}`,
   );
   await client.query(
-    `ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO ${role}`,
+    `ALTER DEFAULT PRIVILEGES IN SCHEMA ${schema} GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO ${role}`,
   );
   await client.query(
-    `ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO ${role}`,
+    `ALTER DEFAULT PRIVILEGES IN SCHEMA ${schema} GRANT EXECUTE ON FUNCTIONS TO ${role}`,
   );
 }
 
 async function migrate() {
   const client = await migrationDb.connect();
   try {
+    const schemaName = process.env.DB_SCHEMA?.trim() || "public";
+    const schema = quoteIdentifier(schemaName, "DB_SCHEMA");
+    await client.query(`CREATE SCHEMA IF NOT EXISTS ${schema}`);
+    await client.query(`SET search_path TO ${schema}, public`);
     await client.query("SELECT pg_advisory_lock($1)", [lockId]);
     await client.query(`
       CREATE TABLE IF NOT EXISTS crm_schema_migrations (

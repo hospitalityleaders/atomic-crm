@@ -35,6 +35,7 @@ supabase/.temp
 dist/
 /lib/
 .env
+/compose.production.private.yml
 *storybook.log
 
 # Shadcn Registry

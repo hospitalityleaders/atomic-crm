@@ -6,36 +6,36 @@ The application container is disposable. Structured CRM data lives in UpCloud Ma
 
 ## 1. Prepare PostgreSQL
 
-Use the existing UpCloud Managed PostgreSQL service and create:
+Use the existing UpCloud Managed PostgreSQL service and the existing `holedo_crm` database. The rebuilt application uses its own `atomic_crm` schema, so the old Bottle/Django tables in `public` do not need to be deleted first.
 
 - database: `holedo_crm`
-- migration/owner user: `holedo_crm_owner`
-- application user: `holedo_crm`
-- separate strong passwords for both users
+- schema: `atomic_crm`
+- initial application and migration user: `holedo_crm_app`
 
-The owner user applies schema migrations. The application user handles normal requests and must not have `BYPASSRLS`. Every tenant-owned record carries a `workspace_id`, and forced PostgreSQL row-level security is the final isolation boundary.
+The existing user applies schema migrations and handles requests for the first deployment. It must be allowed to create the `atomic_crm` schema and must not have `BYPASSRLS`. Every tenant-owned record carries a `workspace_id`, and forced PostgreSQL row-level security is the final isolation boundary. A separate migration owner can be introduced later without changing application data.
 
-Put the two passwords directly into these YAML values:
+For the first deployment, put the existing `holedo_crm_app` password into both YAML values:
 
 ```yaml
 DB_PASSWORD: "the-holedo-crm-application-password"
-DB_MIGRATION_PASSWORD: "the-holedo-crm-owner-password"
+DB_MIGRATION_PASSWORD: "the-same-holedo-crm-application-password"
 ```
 
-The production stack already contains the Office PostgreSQL hostname and port. Confirm that the two CRM users can connect to `holedo_crm` before deployment.
+The production stack already contains the Office PostgreSQL hostname and port. Confirm that `holedo_crm_app` can connect to `holedo_crm` and create the `atomic_crm` schema before deployment. Do not drop the `public` schema.
 
 ## 2. Prepare file storage
 
 Yes, CRM needs persistent file storage. It is used for note attachments and future company, contact, and deal uploads. Holedo logos, Source Sans Pro, icons, and other fixed branding assets remain inside the application image.
 
-In the existing UpCloud Managed Object Storage service:
+The private `holedo-crm` bucket has been created in the existing UpCloud Managed Object Storage service and its upload/download/delete path has been verified.
 
-1. Create one private bucket named `holedo-crm`.
-2. Create a dedicated CRM access key.
-3. Limit that key to the `holedo-crm` bucket with list, read, write, and delete-object access.
-4. Keep public bucket access disabled.
-5. Enable versioning, retention, lifecycle, and access logging according to Holedo policy.
-6. Copy the access-key ID and secret into the YAML.
+For ongoing operation:
+
+1. Keep public bucket access disabled.
+2. Create a dedicated CRM access key when convenient; the supplied shared Holedo storage key works for the first deployment.
+3. Limit the dedicated key to the `holedo-crm` bucket with list, read, write, and delete-object access.
+4. Enable versioning, retention, lifecycle, and access logging according to Holedo policy.
+5. Put the active access-key ID and secret directly into the YAML.
 
 ```yaml
 S3_ENDPOINT: "https://gdrv6.upcloudobjects.com"
@@ -59,7 +59,9 @@ Required client settings:
 - back-channel logout session required: enabled
 - client role used for platform administrators: `holedo-platform-admin`
 
-Copy the client secret into `OIDC_CLIENT_SECRET`. Confirm the exact production realm URL in `OIDC_ISSUER_URL`; the stack currently uses `https://identity.holedo.com/realms/holedo`.
+The first deployment uses `AUTH_MODE: "demo"`, so the CRM can be tested before the shared Holedo Keycloak client is ready. In demo mode, everyone who can reach `/app` shares the same temporary test workspace. Do not store live customer data in that workspace.
+
+When the production client is ready, copy its client secret into `OIDC_CLIENT_SECRET`, enter the exact realm URL in `OIDC_ISSUER_URL`, and change `AUTH_MODE` to `oidc`.
 
 The avatar menu calls Keycloak's OIDC end-session endpoint. This signs the person out of Holedo globally, not only out of CRM.
 
@@ -70,6 +72,10 @@ Generate a separate random session secret of at least 32 characters and put it d
 Open `compose.production.yml` and replace every underscore placeholder. The production passwords remain in the Portainer stack YAML, matching the Holedo Office deployment pattern. Do not commit the completed secret-bearing YAML back to Git.
 
 Because Docker Compose treats `$` as interpolation syntax, write any literal `$` in a password as `$$` in the stack YAML. Keep values quoted, especially when they contain `#`, `:`, or spaces.
+
+The filled, password-bearing `compose.production.private.yml` is ignored by Git. Use that file as the Portainer stack source. The public `compose.production.yml` remains a safe template with placeholders.
+
+Runtime presentation settings are available at `https://crm.holedo.com/admin/`. This page accepts `ADMIN_TOKEN` from the YAML and does not require a Holedo login.
 
 The stack connects to the existing external `npm_proxy` network with the alias `holedo-crm-web`. In Nginx Proxy Manager, route `crm.holedo.com` to:
 
@@ -86,7 +92,7 @@ The public product page is `https://crm.holedo.com/`. The authenticated applicat
 
 ## 5. Deploy in Portainer
 
-Create or update the `holedo-crm` stack using the completed contents of `compose.production.yml`. If the GitHub package is private, configure `ghcr.io` in Portainer with a token that has `read:packages` access.
+Create or update the `holedo-crm` stack using the completed contents of `compose.production.private.yml`. If the GitHub package is private, configure `ghcr.io` in Portainer with a token that has `read:packages` access.
 
 The stack pulls:
 

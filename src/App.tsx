@@ -1,5 +1,6 @@
 import { CRM } from "@/components/atomic-crm/root/CRM";
 import { LoginPage } from "@/components/atomic-crm/login/LoginPage";
+import { RuntimeAdminPage } from "@/components/atomic-crm/admin/RuntimeAdminPage";
 
 /**
  * Application entry point
@@ -33,6 +34,12 @@ import { LoginPage } from "@/components/atomic-crm/login/LoginPage";
  * );
  */
 const App = () => {
+  if (
+    window.location.pathname === "/admin" ||
+    window.location.pathname.startsWith("/admin/")
+  ) {
+    return <RuntimeAdminPage />;
+  }
   const isCrmApp =
     window.location.pathname === "/app" ||
     window.location.pathname.startsWith("/app/");

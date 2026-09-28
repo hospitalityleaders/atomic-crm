@@ -47,7 +47,7 @@ export async function seedWorkspace(
   workspaceId: string,
   ownerUserId: string,
 ) {
-  await ensureWorkspaceSale(client, workspaceId, ownerUserId);
+  const saleId = await ensureWorkspaceSale(client, workspaceId, ownerUserId);
 
   const existing = await client.query(
     "SELECT id FROM crm_pipelines WHERE workspace_id = $1 AND is_primary",
@@ -135,4 +135,5 @@ export async function seedWorkspace(
      ON CONFLICT (workspace_id) DO NOTHING`,
     [workspaceId, config],
   );
+  return saleId;
 }

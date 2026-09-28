@@ -13,6 +13,7 @@ const sessionLifetimeMs =
 
 let configurationPromise: Promise<oidc.Configuration> | undefined;
 let logoutJwks: ReturnType<typeof createRemoteJWKSet> | undefined;
+let demoSessionPromise: Promise<CrmSession> | undefined;
 
 export type CrmSession = {
   userId: string;
@@ -115,6 +116,72 @@ export function oidcConfigured() {
     usable(process.env.SESSION_SECRET) &&
     (process.env.SESSION_SECRET?.length ?? 0) >= 32
   );
+}
+
+export function currentAuthMode() {
+  const mode = process.env.AUTH_MODE || "oidc";
+  if (mode === "demo") return "demo" as const;
+  if (mode === "oidc" && oidcConfigured()) return "oidc" as const;
+  return "logged-out" as const;
+}
+
+async function getDemoSession(): Promise<CrmSession> {
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+    const userResult = await client.query(
+      `INSERT INTO crm_users
+        (keycloak_subject, email, display_name, first_name, last_name, platform_admin, last_login_at)
+       VALUES ('demo:portainer', $1, 'Holedo CRM Demo', 'Holedo', 'Demo', TRUE, NOW())
+       ON CONFLICT (keycloak_subject) DO UPDATE
+         SET email = EXCLUDED.email, display_name = EXCLUDED.display_name,
+             platform_admin = TRUE, last_login_at = NOW(), updated_at = NOW()
+       RETURNING id, email, display_name`,
+      [process.env.ADMIN_EMAIL || "service@holedo.email"],
+    );
+    const user = userResult.rows[0];
+    await client.query(
+      `INSERT INTO crm_workspaces (workspace_type, name, owner_user_id)
+       VALUES ('personal', 'Holedo CRM Demo', $1)
+       ON CONFLICT (owner_user_id) WHERE workspace_type = 'personal' DO NOTHING`,
+      [user.id],
+    );
+    const workspaceResult = await client.query(
+      "SELECT id, name FROM crm_workspaces WHERE owner_user_id = $1 AND workspace_type = 'personal'",
+      [user.id],
+    );
+    const workspace = workspaceResult.rows[0];
+    await client.query(
+      `INSERT INTO crm_workspace_members
+        (workspace_id, workspace_type, user_id, role, status)
+       VALUES ($1, 'personal', $2, 'owner', 'active')
+       ON CONFLICT (workspace_id, user_id) DO UPDATE
+         SET role = 'owner', status = 'active', updated_at = NOW()`,
+      [workspace.id, user.id],
+    );
+    await client.query("SELECT set_config('app.workspace_id', $1, true)", [
+      workspace.id,
+    ]);
+    const saleId = await seedWorkspace(client, workspace.id, user.id);
+    await client.query("COMMIT");
+    return {
+      userId: user.id,
+      subject: "demo:portainer",
+      email: user.email,
+      displayName: user.display_name,
+      workspaceId: workspace.id,
+      workspaceName: workspace.name,
+      workspaceType: "personal",
+      role: "owner",
+      platformAdmin: true,
+      saleId,
+    };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 async function oidcConfiguration() {
@@ -351,6 +418,10 @@ export async function completeOidcLogin(req: Request, res: Response) {
 }
 
 export async function getCrmSession(req: Request): Promise<CrmSession | null> {
+  if (currentAuthMode() === "demo") {
+    demoSessionPromise ??= getDemoSession();
+    return demoSessionPromise;
+  }
   const token = parseCookies(req)[sessionCookie];
   if (!token) return null;
   const result = await db.query(

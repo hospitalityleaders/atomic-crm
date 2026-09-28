@@ -8,11 +8,6 @@ const required = [
   "DB_PASSWORD",
   "DB_MIGRATION_USER",
   "DB_MIGRATION_PASSWORD",
-  "OIDC_ISSUER_URL",
-  "OIDC_CLIENT_ID",
-  "OIDC_CLIENT_SECRET",
-  "OIDC_REDIRECT_URI",
-  "OIDC_POST_LOGOUT_REDIRECT_URI",
   "SESSION_SECRET",
   "S3_BUCKET",
 ] as const;
@@ -22,6 +17,30 @@ const warnings: string[] = [];
 
 for (const name of required) {
   if (!process.env[name]?.trim()) errors.push(`${name} is required`);
+}
+
+const authMode = process.env.AUTH_MODE || "oidc";
+if (!["demo", "oidc", "logged-out"].includes(authMode)) {
+  errors.push("AUTH_MODE must be demo, oidc, or logged-out");
+}
+if (authMode === "oidc") {
+  for (const name of [
+    "OIDC_ISSUER_URL",
+    "OIDC_CLIENT_ID",
+    "OIDC_CLIENT_SECRET",
+    "OIDC_REDIRECT_URI",
+    "OIDC_POST_LOGOUT_REDIRECT_URI",
+  ]) {
+    if (!process.env[name]?.trim())
+      errors.push(`${name} is required in OIDC mode`);
+  }
+}
+
+if (
+  process.env.DB_SCHEMA &&
+  !/^[A-Za-z_][A-Za-z0-9_$]*$/.test(process.env.DB_SCHEMA)
+) {
+  errors.push("DB_SCHEMA must be a valid PostgreSQL identifier");
 }
 
 function validateUrl(name: string) {
@@ -61,6 +80,18 @@ for (const name of [
 
 if ((process.env.SESSION_SECRET?.length ?? 0) < 32) {
   errors.push("SESSION_SECRET must contain at least 32 characters");
+}
+
+if (process.env.ADMIN_TOKEN && !process.env.ADMIN_SESSION_SECRET) {
+  errors.push(
+    "ADMIN_SESSION_SECRET is required when ADMIN_TOKEN is configured",
+  );
+}
+if (
+  process.env.ADMIN_SESSION_SECRET &&
+  process.env.ADMIN_SESSION_SECRET.length < 32
+) {
+  errors.push("ADMIN_SESSION_SECRET must contain at least 32 characters");
 }
 
 if (

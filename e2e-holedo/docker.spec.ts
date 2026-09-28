@@ -65,6 +65,28 @@ async function newSignedInPage(
   return { context, page };
 }
 
+test("Holedo public theme and token-only CRM admin work", async ({ page }) => {
+  await page.goto("/");
+  await expect(
+    page.getByRole("heading", {
+      name: "Track sales and customer conversations",
+    }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Theme: Auto" }).click();
+  await expect(page.locator("html")).toHaveClass(/light/);
+
+  await page.goto("/admin/");
+  await expect(page.getByRole("heading", { name: "Admin" })).toBeVisible();
+  await page.getByLabel("Admin token").fill("local-holedo-admin-token");
+  await page.getByRole("button", { name: "Connect" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Runtime settings" }),
+  ).toBeVisible();
+  await expect(page.getByLabel("Homepage headline")).toHaveValue(
+    "Track sales and customer conversations",
+  );
+});
+
 test("Holedo identity, workspaces and storage work together", async ({
   browser,
 }) => {

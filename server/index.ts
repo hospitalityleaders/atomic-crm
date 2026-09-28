@@ -1,4 +1,5 @@
 import "dotenv/config";
+import crypto from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express, {
@@ -9,6 +10,7 @@ import express, {
 import {
   beginOidcLogin,
   completeOidcLogin,
+  currentAuthMode,
   getCrmSession,
   handleBackchannelLogout,
   logoutCrmSession,
@@ -28,12 +30,90 @@ import { workspaceRouter } from "./workspace-routes.js";
 const app = express();
 const port = Number(process.env.PORT ?? 3000);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const adminCookie = "holedo_crm_admin";
+const adminJson = express.json({ limit: "64kb" });
 
 function trustProxySetting() {
   const value = String(process.env.TRUST_PROXY ?? "1").trim();
   if (["0", "false", "off"].includes(value.toLowerCase())) return false;
   if (/^\d+$/.test(value)) return Number(value);
   return value;
+}
+
+function parseCookies(req: Request) {
+  return Object.fromEntries(
+    (req.headers.cookie ?? "")
+      .split(";")
+      .map((part) => part.trim().split("=").map(decodeURIComponent))
+      .filter((part) => part.length === 2),
+  );
+}
+
+function adminSessionSecret() {
+  return process.env.ADMIN_SESSION_SECRET || process.env.ADMIN_TOKEN || "";
+}
+
+function createAdminSession() {
+  const payload = Buffer.from(
+    JSON.stringify({ exp: Date.now() + 8 * 60 * 60 * 1000 }),
+  ).toString("base64url");
+  const signature = crypto
+    .createHmac("sha256", adminSessionSecret())
+    .update(payload)
+    .digest("base64url");
+  return `${payload}.${signature}`;
+}
+
+function hasAdminSession(req: Request) {
+  const value = parseCookies(req)[adminCookie];
+  if (!value || !adminSessionSecret()) return false;
+  const [payload, suppliedSignature] = value.split(".");
+  if (!payload || !suppliedSignature) return false;
+  const expectedSignature = crypto
+    .createHmac("sha256", adminSessionSecret())
+    .update(payload)
+    .digest("base64url");
+  const supplied = Buffer.from(suppliedSignature);
+  const expected = Buffer.from(expectedSignature);
+  if (
+    supplied.length !== expected.length ||
+    !crypto.timingSafeEqual(supplied, expected)
+  )
+    return false;
+  try {
+    return (
+      Number(JSON.parse(Buffer.from(payload, "base64url").toString()).exp) >
+      Date.now()
+    );
+  } catch {
+    return false;
+  }
+}
+
+async function requireRuntimeAdmin(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  if (hasAdminSession(req)) return next();
+  if (currentAuthMode() === "oidc") {
+    const session = await getCrmSession(req);
+    if (session?.platformAdmin) {
+      res.locals.session = session;
+      return next();
+    }
+  }
+  return res.status(401).json({ error: "Admin access required" });
+}
+
+function sameOrigin(req: Request) {
+  const origin = req.get("origin");
+  if (!origin) return true;
+  try {
+    return new URL(origin).host === req.get("host");
+  } catch {
+    return false;
+  }
 }
 
 app.set("trust proxy", trustProxySetting());
@@ -52,11 +132,40 @@ app.get("/api/runtime", async (_req, res) => {
   res.json({
     ...result.rows[0],
     oidcConfigured: oidcConfigured(),
+    authMode: currentAuthMode(),
+    loginUrl:
+      currentAuthMode() === "demo"
+        ? "/app"
+        : currentAuthMode() === "oidc"
+          ? "/auth/login?returnTo=%2Fapp"
+          : process.env.HOLEDO_LOGIN_URL || "https://www.holedo.com/login/",
+    signupUrl:
+      currentAuthMode() === "demo"
+        ? "/app"
+        : currentAuthMode() === "oidc"
+          ? "/auth/register?returnTo=%2Fapp"
+          : process.env.HOLEDO_SIGNUP_URL || "https://www.holedo.com/register/",
   });
 });
 
-app.get("/auth/login", (req, res) => beginOidcLogin(req, res));
-app.get("/auth/register", (req, res) => beginOidcLogin(req, res, true));
+app.get("/auth/login", (req, res) => {
+  if (currentAuthMode() === "demo") return res.redirect(302, "/app");
+  if (!oidcConfigured())
+    return res.redirect(
+      302,
+      process.env.HOLEDO_LOGIN_URL || "https://www.holedo.com/login/",
+    );
+  return beginOidcLogin(req, res);
+});
+app.get("/auth/register", (req, res) => {
+  if (currentAuthMode() === "demo") return res.redirect(302, "/app");
+  if (!oidcConfigured())
+    return res.redirect(
+      302,
+      process.env.HOLEDO_SIGNUP_URL || "https://www.holedo.com/register/",
+    );
+  return beginOidcLogin(req, res, true);
+});
 app.get("/auth/callback", completeOidcLogin);
 app.get("/auth/logout", logoutCrmSession);
 app.get("/auth/account", (_req, res) => {
@@ -89,12 +198,30 @@ async function requireSession(req: Request, res: Response, next: NextFunction) {
 app.get("/api/session", requireSession, (_req, res) => {
   res.json({ data: res.locals.session });
 });
-app.get("/api/admin/runtime", requireSession, async (_req, res) => {
-  if (!res.locals.session.platformAdmin) {
-    return res
-      .status(403)
-      .json({ error: "Holedo platform administrator access required" });
-  }
+app.post("/api/admin/session", adminJson, (req, res) => {
+  if (!sameOrigin(req))
+    return res.status(403).json({ error: "Origin rejected" });
+  const expectedToken = process.env.ADMIN_TOKEN;
+  if (!expectedToken)
+    return res.status(503).json({ error: "Admin access is not configured" });
+  const supplied = Buffer.from(String(req.body?.token ?? ""));
+  const expected = Buffer.from(expectedToken);
+  if (
+    supplied.length !== expected.length ||
+    !crypto.timingSafeEqual(supplied, expected)
+  )
+    return res.status(401).json({ error: "Unauthorized" });
+  res.cookie(adminCookie, createAdminSession(), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 8 * 60 * 60 * 1000,
+    path: "/",
+  });
+  res.json({ ok: true });
+});
+
+app.get("/api/admin/runtime", requireRuntimeAdmin, async (_req, res) => {
   const [settings, navigation] = await Promise.all([
     db.query("SELECT * FROM crm_runtime_settings WHERE id = TRUE"),
     db.query(
@@ -103,33 +230,75 @@ app.get("/api/admin/runtime", requireSession, async (_req, res) => {
   ]);
   res.json({ data: { ...settings.rows[0], navigation: navigation.rows } });
 });
-app.put("/api/admin/runtime", requireSession, async (req, res) => {
-  if (!res.locals.session.platformAdmin) {
-    return res
-      .status(403)
-      .json({ error: "Holedo platform administrator access required" });
-  }
-  const allowed = [
-    "meta_title",
-    "meta_description",
-    "landing_headline",
-    "landing_subtitle",
-    "privacy_url",
-    "cookie_url",
-    "terms_url",
-    "imprint_url",
-  ];
-  const values = allowed.map((key) => String(req.body?.[key] ?? ""));
-  const settings = await db.query(
-    `UPDATE crm_runtime_settings SET
-      meta_title = $1, meta_description = $2, landing_headline = $3,
-      landing_subtitle = $4, privacy_url = $5, cookie_url = $6,
-      terms_url = $7, imprint_url = $8, updated_at = NOW()
-     WHERE id = TRUE RETURNING *`,
-    values,
-  );
-  res.json({ data: settings.rows[0] });
-});
+app.put(
+  "/api/admin/runtime",
+  requireRuntimeAdmin,
+  adminJson,
+  async (req, res) => {
+    if (!sameOrigin(req))
+      return res.status(403).json({ error: "Origin rejected" });
+    const allowed = [
+      "meta_title",
+      "meta_description",
+      "landing_headline",
+      "landing_subtitle",
+      "privacy_url",
+      "cookie_url",
+      "terms_url",
+      "imprint_url",
+    ];
+    const values = allowed.map((key) => String(req.body?.[key] ?? ""));
+    const navigation = Array.isArray(req.body?.navigation)
+      ? req.body.navigation.slice(0, 30)
+      : [];
+    const client = await db.connect();
+    try {
+      await client.query("BEGIN");
+      const settings = await client.query(
+        `UPDATE crm_runtime_settings SET
+        meta_title = $1, meta_description = $2, landing_headline = $3,
+        landing_subtitle = $4, privacy_url = $5, cookie_url = $6,
+        terms_url = $7, imprint_url = $8, updated_at = NOW()
+       WHERE id = TRUE RETURNING *`,
+        values,
+      );
+      await client.query("DELETE FROM crm_navigation");
+      for (const [index, item] of navigation.entries()) {
+        const label = String(item?.label ?? "")
+          .trim()
+          .slice(0, 80);
+        const url = String(item?.url ?? "")
+          .trim()
+          .slice(0, 1000);
+        if (!label || !url) continue;
+        await client.query(
+          `INSERT INTO crm_navigation (label, url, sort_order, enabled)
+         VALUES ($1, $2, $3, $4)`,
+          [
+            label,
+            url,
+            Number.isFinite(Number(item?.sort_order))
+              ? Number(item.sort_order)
+              : index * 10,
+            item?.enabled !== false,
+          ],
+        );
+      }
+      await client.query("COMMIT");
+      const savedNavigation = await db.query(
+        "SELECT id, label, url, sort_order, enabled FROM crm_navigation ORDER BY sort_order, id",
+      );
+      res.json({
+        data: { ...settings.rows[0], navigation: savedNavigation.rows },
+      });
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  },
+);
 app.post("/api/session/workspace", requireSession, async (req, res) => {
   const changed = await switchWorkspace(
     req,

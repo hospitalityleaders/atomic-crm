@@ -17,9 +17,10 @@ services:
       DB_HOST: "holedo-postgresql-production-gympboioheqo.db.upclouddatabases.com"
       DB_PORT: "11569"
       DB_NAME: "holedo_crm"
-      DB_USER: "holedo_crm"
+      DB_SCHEMA: "atomic_crm"
+      DB_USER: "holedo_crm_app"
       DB_PASSWORD: "___________________________"
-      DB_MIGRATION_USER: "holedo_crm_owner"
+      DB_MIGRATION_USER: "holedo_crm_app"
       DB_MIGRATION_PASSWORD: "___________________________"
       DB_SSL: "true"
       DB_SSL_REJECT_UNAUTHORIZED: "false"
@@ -28,7 +29,7 @@ services:
       DB_IDLE_TIMEOUT_MS: "30000"
 
       # UpCloud Managed Object Storage
-      # Create one private bucket named holedo-crm and a dedicated access key.
+      # The private holedo-crm bucket has already been created.
       S3_ENDPOINT: "https://gdrv6.upcloudobjects.com"
       S3_REGION: "europe-2"
       S3_BUCKET: "holedo-crm"
@@ -40,15 +41,25 @@ services:
       FILE_UPLOAD_LIMIT: "10mb"
 
       # Holedo Keycloak / OpenID Connect
-      OIDC_ISSUER_URL: "https://identity.holedo.com/realms/holedo"
+      # Demo mode makes the stack usable now. Change to oidc after the shared
+      # Holedo Keycloak client has been created.
+      AUTH_MODE: "demo"
+      HOLEDO_LOGIN_URL: "https://www.holedo.com/login/"
+      HOLEDO_SIGNUP_URL: "https://www.holedo.com/register/"
+      OIDC_ISSUER_URL: ""
       OIDC_CLIENT_ID: "holedo-crm"
-      OIDC_CLIENT_SECRET: "___________________________"
+      OIDC_CLIENT_SECRET: ""
       OIDC_REDIRECT_URI: "https://crm.holedo.com/auth/callback"
       OIDC_POST_LOGOUT_REDIRECT_URI: "https://crm.holedo.com/"
       SESSION_SECRET: "___________________________"
-      SESSION_COOKIE_DOMAIN: ".holedo.com"
+      SESSION_COOKIE_DOMAIN: ""
       SESSION_MAX_AGE_SECONDS: "43200"
       PLATFORM_ADMIN_ROLE: "holedo-platform-admin"
+
+      # Token-only runtime administration at https://crm.holedo.com/admin/
+      ADMIN_EMAIL: "service@holedo.email"
+      ADMIN_TOKEN: "___________________________"
+      ADMIN_SESSION_SECRET: "___________________________"
 
       # Company workspaces are provisioned by Holedo administrators initially.
       ALLOW_SELF_SERVICE_COMPANY_WORKSPACES: "false"

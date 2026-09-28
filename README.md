@@ -15,6 +15,8 @@ It provides:
 
 The public product page is served at `/`. The authenticated workspace is served at `/app` with its own CRM header, workspace switcher and avatar menu.
 
+The public page and CRM support light, dark and automatic themes. Runtime presentation settings are available at `/admin/` through a separate server-side admin token, so administrators do not need to sign in to Holedo to edit them.
+
 ## Run locally
 
 Requirements: Node.js 22, npm and Docker.
