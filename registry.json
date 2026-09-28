@@ -882,6 +882,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/admin/RuntimeAdminPage.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/activity/ActivityLogNote.tsx",
           "type": "registry:component"
         },
@@ -939,6 +943,10 @@
         },
         {
           "path": "src/hooks/useBulkExport.tsx",
+          "type": "registry:hook"
+        },
+        {
+          "path": "src/hooks/use-public-theme.ts",
           "type": "registry:hook"
         },
         {
