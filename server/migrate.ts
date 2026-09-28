@@ -8,6 +8,47 @@ const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const migrationsDirectory = path.join(currentDirectory, "migrations");
 const lockId = Number(process.env.MIGRATION_LOCK_ID ?? 2_042_609_28);
 
+function quoteIdentifier(value: string, name: string) {
+  if (!/^[A-Za-z_][A-Za-z0-9_$]*$/.test(value)) {
+    throw new Error(`${name} must be a valid PostgreSQL identifier`);
+  }
+  return `"${value.replaceAll('"', '""')}"`;
+}
+
+async function grantApplicationPrivileges(client: {
+  query: (text: string, values?: unknown[]) => Promise<unknown>;
+}) {
+  const applicationUser = process.env.DB_USER;
+  const databaseName = process.env.DB_NAME;
+  if (!applicationUser || !databaseName) {
+    throw new Error("DB_USER and DB_NAME are required for database grants");
+  }
+
+  const role = quoteIdentifier(applicationUser, "DB_USER");
+  const database = quoteIdentifier(databaseName, "DB_NAME");
+
+  await client.query(`GRANT CONNECT ON DATABASE ${database} TO ${role}`);
+  await client.query(`GRANT USAGE ON SCHEMA public TO ${role}`);
+  await client.query(
+    `GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO ${role}`,
+  );
+  await client.query(
+    `GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO ${role}`,
+  );
+  await client.query(
+    `GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO ${role}`,
+  );
+  await client.query(
+    `ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ${role}`,
+  );
+  await client.query(
+    `ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO ${role}`,
+  );
+  await client.query(
+    `ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO ${role}`,
+  );
+}
+
 async function migrate() {
   const client = await migrationDb.connect();
   try {
@@ -45,6 +86,7 @@ async function migrate() {
         throw error;
       }
     }
+    await grantApplicationPrivileges(client);
   } finally {
     await client
       .query("SELECT pg_advisory_unlock($1)", [lockId])
