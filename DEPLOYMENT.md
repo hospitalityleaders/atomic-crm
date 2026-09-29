@@ -6,13 +6,13 @@ The application container is disposable. Structured CRM data lives in UpCloud Ma
 
 ## 1. Prepare PostgreSQL
 
-Use the existing UpCloud Managed PostgreSQL service and the existing `holedo_crm` database. The rebuilt application uses its own `atomic_crm` schema, so the old Bottle/Django tables in `public` do not need to be deleted first.
+Use the existing UpCloud Managed PostgreSQL service and the existing `holedo_crm` database. No legacy data is retained.
 
 - database: `holedo_crm`
-- schema: `atomic_crm`
+- schema: `public`
 - initial application and migration user: `holedo_crm_app`
 
-The existing user applies schema migrations and handles requests for the first deployment. It must be allowed to create the `atomic_crm` schema and must not have `BYPASSRLS`. Every tenant-owned record carries a `workspace_id`, and forced PostgreSQL row-level security is the final isolation boundary. A separate migration owner can be introduced later without changing application data.
+The existing user applies schema migrations and handles requests for the first deployment. It must own the recreated `public` schema and must not have `BYPASSRLS`. Every tenant-owned record carries a `workspace_id`, and forced PostgreSQL row-level security is the final isolation boundary. A separate migration owner can be introduced later without changing application data.
 
 For the first deployment, put the existing `holedo_crm_app` password into both YAML values:
 
@@ -21,7 +21,15 @@ DB_PASSWORD: "the-holedo-crm-application-password"
 DB_MIGRATION_PASSWORD: "the-same-holedo-crm-application-password"
 ```
 
-The production stack already contains the Office PostgreSQL hostname and port. Confirm that `holedo_crm_app` can connect to `holedo_crm` and create the `atomic_crm` schema before deployment. Do not drop the `public` schema.
+Before deploying the application:
+
+1. Take an UpCloud database snapshot as a rollback point.
+2. Use `compose.database-reset.private.yml` as a separate, temporary Portainer stack.
+3. Wait for `holedo-crm-database-reset` to exit successfully and show “The holedo_crm database is clean.”
+4. Delete the reset stack immediately.
+5. Deploy the normal CRM stack from `compose.production.private.yml`.
+
+The reset stack removes both the old `public` schema and any earlier `atomic_crm` test schema, then recreates an empty `public` schema owned by `holedo_crm_app`. It checks the database name before deleting anything and rolls the transaction back if any step fails.
 
 ## 2. Prepare file storage
 

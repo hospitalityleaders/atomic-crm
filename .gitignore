@@ -36,6 +36,7 @@ dist/
 /lib/
 .env
 /compose.production.private.yml
+/compose.database-reset.private.yml
 *storybook.log
 
 # Shadcn Registry
