@@ -30,15 +30,11 @@ services:
 
       # UpCloud Managed Object Storage
       # The private holedo-crm bucket has already been created.
+      # UpCloud Managed Object Storage
       S3_ENDPOINT: "https://gdrv6.upcloudobjects.com"
-      S3_REGION: "europe-2"
       S3_BUCKET: "holedo-crm"
       S3_ACCESS_KEY_ID: "___________________________"
       S3_SECRET_ACCESS_KEY: "___________________________"
-      S3_FORCE_PATH_STYLE: "false"
-      S3_CREATE_BUCKET: "false"
-      S3_SIGNED_URL_TTL_SECONDS: "300"
-      FILE_UPLOAD_LIMIT: "10mb"
 
       # Holedo Keycloak / OpenID Connect
       # Demo mode makes the stack usable now. Change to oidc after the shared

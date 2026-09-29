@@ -41,7 +41,6 @@ For ongoing operation:
 
 ```yaml
 S3_ENDPOINT: "https://gdrv6.upcloudobjects.com"
-S3_REGION: "europe-2"
 S3_BUCKET: "holedo-crm"
 S3_ACCESS_KEY_ID: "the-dedicated-crm-access-key"
 S3_SECRET_ACCESS_KEY: "the-dedicated-crm-secret-key"
