@@ -17,6 +17,7 @@ services:
       DB_HOST: "holedo-postgresql-production-gympboioheqo.db.upclouddatabases.com"
       DB_PORT: "11569"
       DB_NAME: "holedo_crm"
+      DB_SCHEMA: "holedo_crm"
       DB_USER: "holedo_crm_app"
       DB_PASSWORD: "___________________________"
 

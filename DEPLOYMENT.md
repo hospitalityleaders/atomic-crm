@@ -9,14 +9,19 @@ The application container is disposable. Structured CRM data lives in UpCloud Ma
 Use the existing UpCloud Managed PostgreSQL service and the existing `holedo_crm` database. No legacy data is retained.
 
 - database: `holedo_crm`
-- schema: `public`
+- schema: `holedo_crm`
 - initial application and migration user: `holedo_crm_app`
 
-The existing user applies schema migrations and handles requests for the first deployment. It must own the recreated `public` schema and must not have `BYPASSRLS`. Every tenant-owned record carries a `workspace_id`, and forced PostgreSQL row-level security is the final isolation boundary. A separate migration owner can be introduced later without changing application data.
+The existing user initializes the new CRM tables and handles requests. It must own the dedicated `holedo_crm` schema and must not have `BYPASSRLS`. Every tenant-owned record carries a `workspace_id`, and forced PostgreSQL row-level security is the final isolation boundary.
 
-The legacy CRM schema has been removed. Deploy the CRM from the single
-`compose.production.private.yml` stack; it creates the new application tables
-in the empty `public` schema.
+Allow the application role to create its dedicated schema once:
+
+```sql
+GRANT CREATE ON DATABASE holedo_crm TO holedo_crm_app;
+```
+
+Deploy the CRM from the single `compose.production.private.yml` stack. On first
+startup it creates the `holedo_crm` schema and the new application tables.
 
 ## 2. Prepare file storage
 

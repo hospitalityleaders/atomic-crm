@@ -19,11 +19,14 @@ async function grantApplicationPrivileges(client: {
   query: (text: string, values?: unknown[]) => Promise<unknown>;
 }) {
   const applicationUser = process.env.DB_USER;
+  const initializationUser =
+    process.env.DB_MIGRATION_USER ?? process.env.DB_USER;
   const databaseName = process.env.DB_NAME;
   const schemaName = process.env.DB_SCHEMA?.trim() || "public";
   if (!applicationUser || !databaseName) {
     throw new Error("DB_USER and DB_NAME are required for database grants");
   }
+  if (initializationUser === applicationUser) return;
 
   const role = quoteIdentifier(applicationUser, "DB_USER");
   const database = quoteIdentifier(databaseName, "DB_NAME");
@@ -56,7 +59,24 @@ async function migrate() {
   try {
     const schemaName = process.env.DB_SCHEMA?.trim() || "public";
     const schema = quoteIdentifier(schemaName, "DB_SCHEMA");
-    await client.query(`CREATE SCHEMA IF NOT EXISTS ${schema}`);
+    const existingSchema = await client.query(
+      "SELECT 1 FROM pg_namespace WHERE nspname = $1",
+      [schemaName],
+    );
+    if (!existingSchema.rowCount) {
+      await client.query(`CREATE SCHEMA ${schema}`);
+      console.warn(`Created database schema ${schemaName}`);
+    }
+    const privilege = await client.query<{ ready: boolean }>(
+      `SELECT has_schema_privilege(current_user, $1, 'USAGE')
+          AND has_schema_privilege(current_user, $1, 'CREATE') AS ready`,
+      [schemaName],
+    );
+    if (!privilege.rows[0]?.ready) {
+      throw new Error(
+        `Database user cannot create tables in the existing ${schemaName} schema`,
+      );
+    }
     await client.query(`SET search_path TO ${schema}, public`);
     await client.query("SELECT pg_advisory_lock($1)", [lockId]);
     await client.query(`
@@ -103,6 +123,6 @@ async function migrate() {
 }
 
 migrate().catch((error) => {
-  console.error("Database migration failed", error);
+  console.error("Database initialization failed", error);
   process.exitCode = 1;
 });
