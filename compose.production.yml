@@ -1,0 +1,99 @@
+services:
+  crm:
+    image: ghcr.io/hospitalityleaders/atomic-crm:latest
+    pull_policy: always
+    container_name: holedo-crm-web
+    restart: unless-stopped
+    init: true
+
+    environment:
+      # Application
+      NODE_ENV: "production"
+      PORT: "3000"
+      APP_ORIGIN: "https://crm.holedo.com"
+      TRUST_PROXY: "1"
+
+      # UpCloud Managed PostgreSQL
+      DB_HOST: "holedo-postgresql-production-gympboioheqo.db.upclouddatabases.com"
+      DB_PORT: "11569"
+      DB_NAME: "holedo_crm"
+      DB_SCHEMA: "public"
+      DB_USER: "holedo_crm_app"
+      DB_PASSWORD: "___________________________"
+      DB_MIGRATION_USER: "holedo_crm_app"
+      DB_MIGRATION_PASSWORD: "___________________________"
+      DB_SSL: "true"
+      DB_SSL_REJECT_UNAUTHORIZED: "false"
+      DB_POOL_MAX: "10"
+      DB_CONNECT_TIMEOUT_MS: "5000"
+      DB_IDLE_TIMEOUT_MS: "30000"
+
+      # UpCloud Managed Object Storage
+      # The private holedo-crm bucket has already been created.
+      # UpCloud Managed Object Storage
+      S3_ENDPOINT: "https://gdrv6.upcloudobjects.com"
+      S3_BUCKET: "holedo-crm"
+      S3_ACCESS_KEY_ID: "___________________________"
+      S3_SECRET_ACCESS_KEY: "___________________________"
+
+      # Holedo Keycloak / OpenID Connect
+      # Demo mode makes the stack usable now. Change to oidc after the shared
+      # Holedo Keycloak client has been created.
+      AUTH_MODE: "demo"
+      HOLEDO_LOGIN_URL: "https://www.holedo.com/login/"
+      HOLEDO_SIGNUP_URL: "https://www.holedo.com/register/"
+      OIDC_ISSUER_URL: ""
+      OIDC_CLIENT_ID: "holedo-crm"
+      OIDC_CLIENT_SECRET: ""
+      OIDC_REDIRECT_URI: "https://crm.holedo.com/auth/callback"
+      OIDC_POST_LOGOUT_REDIRECT_URI: "https://crm.holedo.com/"
+      SESSION_SECRET: "___________________________"
+      SESSION_COOKIE_DOMAIN: ""
+      SESSION_MAX_AGE_SECONDS: "43200"
+      PLATFORM_ADMIN_ROLE: "holedo-platform-admin"
+
+      # Token-only runtime administration at https://crm.holedo.com/admin/
+      ADMIN_EMAIL: "service@holedo.email"
+      ADMIN_TOKEN: "___________________________"
+      ADMIN_SESSION_SECRET: "___________________________"
+
+      # Company workspaces are provisioned by Holedo administrators initially.
+      ALLOW_SELF_SERVICE_COMPANY_WORKSPACES: "false"
+
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,noexec,nosuid
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 15s
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "5"
+
+    networks:
+      npm_proxy:
+        aliases:
+          - holedo-crm-web
+
+networks:
+  npm_proxy:
+    external: true
+    name: npm_proxy
