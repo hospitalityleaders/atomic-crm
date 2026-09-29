@@ -7,7 +7,7 @@ const sslEnabled = !["0", "false", "off"].includes(
 const ssl = sslEnabled
   ? {
       rejectUnauthorized:
-        String(process.env.DB_SSL_REJECT_UNAUTHORIZED ?? "true") === "true",
+        String(process.env.DB_SSL_REJECT_UNAUTHORIZED ?? "false") === "true",
       ...(process.env.DB_SSL_CA
         ? { ca: process.env.DB_SSL_CA.replace(/\\n/g, "\n") }
         : {}),

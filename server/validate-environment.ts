@@ -6,8 +6,6 @@ const required = [
   "DB_NAME",
   "DB_USER",
   "DB_PASSWORD",
-  "DB_MIGRATION_USER",
-  "DB_MIGRATION_PASSWORD",
   "SESSION_SECRET",
   "S3_BUCKET",
 ] as const;
@@ -109,7 +107,11 @@ if (process.env.NODE_ENV === "production") {
       "OIDC_ALLOW_INSECURE_HTTP is enabled; use this only for local testing",
     );
   }
-  if (process.env.DB_SSL !== "true") {
+  if (
+    ["0", "false", "off"].includes(
+      String(process.env.DB_SSL ?? "true").toLowerCase(),
+    )
+  ) {
     warnings.push(
       "DB_SSL is not true; production PostgreSQL traffic is not encrypted",
     );

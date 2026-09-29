@@ -14,13 +14,6 @@ Use the existing UpCloud Managed PostgreSQL service and the existing `holedo_crm
 
 The existing user applies schema migrations and handles requests for the first deployment. It must own the recreated `public` schema and must not have `BYPASSRLS`. Every tenant-owned record carries a `workspace_id`, and forced PostgreSQL row-level security is the final isolation boundary. A separate migration owner can be introduced later without changing application data.
 
-For the first deployment, put the existing `holedo_crm_app` password into both YAML values:
-
-```yaml
-DB_PASSWORD: "the-holedo-crm-application-password"
-DB_MIGRATION_PASSWORD: "the-same-holedo-crm-application-password"
-```
-
 The legacy CRM schema has been removed. Deploy the CRM from the single
 `compose.production.private.yml` stack; it creates the new application tables
 in the empty `public` schema.
