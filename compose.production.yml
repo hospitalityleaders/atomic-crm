@@ -17,19 +17,9 @@ services:
       DB_HOST: "holedo-postgresql-production-gympboioheqo.db.upclouddatabases.com"
       DB_PORT: "11569"
       DB_NAME: "holedo_crm"
-      DB_SCHEMA: "public"
       DB_USER: "holedo_crm_app"
       DB_PASSWORD: "___________________________"
-      DB_MIGRATION_USER: "holedo_crm_app"
-      DB_MIGRATION_PASSWORD: "___________________________"
-      DB_SSL: "true"
-      DB_SSL_REJECT_UNAUTHORIZED: "false"
-      DB_POOL_MAX: "10"
-      DB_CONNECT_TIMEOUT_MS: "5000"
-      DB_IDLE_TIMEOUT_MS: "30000"
 
-      # UpCloud Managed Object Storage
-      # The private holedo-crm bucket has already been created.
       # UpCloud Managed Object Storage
       S3_ENDPOINT: "https://gdrv6.upcloudobjects.com"
       S3_BUCKET: "holedo-crm"
