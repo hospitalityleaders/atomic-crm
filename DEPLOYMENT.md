@@ -21,15 +21,9 @@ DB_PASSWORD: "the-holedo-crm-application-password"
 DB_MIGRATION_PASSWORD: "the-same-holedo-crm-application-password"
 ```
 
-Before deploying the application:
-
-1. Take an UpCloud database snapshot as a rollback point.
-2. Use `compose.database-reset.private.yml` as a separate, temporary Portainer stack.
-3. Wait for `holedo-crm-database-reset` to exit successfully and show “The holedo_crm database is clean.”
-4. Delete the reset stack immediately.
-5. Deploy the normal CRM stack from `compose.production.private.yml`.
-
-The reset stack removes both the old `public` schema and any earlier `atomic_crm` test schema, then recreates an empty `public` schema owned by `holedo_crm_app`. It checks the database name before deleting anything and rolls the transaction back if any step fails.
+The legacy CRM schema has been removed. Deploy the CRM from the single
+`compose.production.private.yml` stack; it creates the new application tables
+in the empty `public` schema.
 
 ## 2. Prepare file storage
 
