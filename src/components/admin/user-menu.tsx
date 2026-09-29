@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 
 export type UserMenuProps = {
   children?: React.ReactNode;
+  logoutHref?: string;
 };
 
 /**
@@ -31,16 +32,12 @@ export type UserMenuProps = {
  *
  * @see {@link https://marmelab.com/shadcn-admin-kit/docs/usermenu UserMenu documentation}
  */
-export function UserMenu({ children }: UserMenuProps) {
+export function UserMenu({ children, logoutHref }: UserMenuProps) {
   const authProvider = useAuthProvider();
   const { data: identity } = useGetIdentity();
   const logout = useLogout();
 
   const [open, setOpen] = useState(false);
-
-  const handleToggleOpen = useCallback(() => {
-    setOpen((prevOpen) => !prevOpen);
-  }, []);
 
   const handleClose = useCallback(() => {
     setOpen(false);
@@ -50,9 +47,10 @@ export function UserMenu({ children }: UserMenuProps) {
 
   return (
     <UserMenuContext.Provider value={{ onClose: handleClose }}>
-      <DropdownMenu open={open} onOpenChange={handleToggleOpen}>
+      <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
           <Button
+            aria-label="Open account menu"
             variant="ghost"
             className="relative h-8 w-8 ml-2 rounded-full"
           >
@@ -73,10 +71,22 @@ export function UserMenu({ children }: UserMenuProps) {
           <DropdownMenuSeparator />
           {children}
           {Children.count(children) > 0 && <DropdownMenuSeparator />}
-          <DropdownMenuItem onClick={() => logout()} className="cursor-pointer">
-            <LogOut />
-            <Translate i18nKey="ra.auth.logout">Log out</Translate>
-          </DropdownMenuItem>
+          {logoutHref ? (
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <a href={logoutHref} aria-label="Sign out of Holedo">
+                <LogOut />
+                <Translate i18nKey="ra.auth.logout">Log out</Translate>
+              </a>
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem
+              onClick={() => logout()}
+              className="cursor-pointer"
+            >
+              <LogOut />
+              <Translate i18nKey="ra.auth.logout">Log out</Translate>
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </UserMenuContext.Provider>

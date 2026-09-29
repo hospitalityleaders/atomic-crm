@@ -11,6 +11,10 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true,
+    proxy: {
+      "/api": "http://localhost:3000",
+      "/auth": "http://localhost:3000",
+    },
   },
   plugins: [
     react(),
@@ -32,6 +36,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MiB
+        navigateFallbackDenylist: [/^\/api(?:\/|$)/, /^\/auth(?:\/|$)/],
       },
       manifest: false, // Use existing manifest.json from public/
     }),
@@ -56,7 +61,7 @@ export default defineConfig({
           ),
         }
       : undefined,
-  base: "./",
+  base: "/",
   esbuild: {
     keepNames: true,
   },

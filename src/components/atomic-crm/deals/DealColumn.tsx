@@ -8,9 +8,11 @@ import { DealCard } from "./DealCard";
 export const DealColumn = ({
   stage,
   deals,
+  droppableId = stage,
 }: {
   stage: string;
   deals: Deal[];
+  droppableId?: string;
 }) => {
   const totalAmount = deals.reduce((sum, deal) => sum + deal.amount, 0);
   const { dealStages, currency } = useConfigurationContext();
@@ -30,12 +32,12 @@ export const DealColumn = ({
           })}
         </p>
       </div>
-      <Droppable droppableId={stage}>
+      <Droppable droppableId={droppableId}>
         {(droppableProvided, snapshot) => (
           <div
             ref={droppableProvided.innerRef}
             {...droppableProvided.droppableProps}
-            className={`flex flex-col rounded-2xl mt-2 gap-2 ${
+            className={`flex min-h-20 flex-col rounded-2xl mt-2 gap-2 ${
               snapshot.isDraggingOver ? "bg-muted" : ""
             }`}
           >

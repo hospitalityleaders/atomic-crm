@@ -1,0 +1,14 @@
+{
+  "identities": [
+    {
+      "name": "holedo-crm-local",
+      "credentials": [
+        {
+          "accessKey": "holedo-crm",
+          "secretKey": "local-holedo-storage-secret"
+        }
+      ],
+      "actions": ["Admin", "Read", "Write"]
+    }
+  ]
+}

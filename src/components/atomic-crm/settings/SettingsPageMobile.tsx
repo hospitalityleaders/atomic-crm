@@ -30,7 +30,6 @@ import {
   useGetOne,
   useLocaleState,
   useLocales,
-  useLogout,
   useNotify,
   useTranslate,
 } from "ra-core";
@@ -95,7 +94,6 @@ const ChangePasswordButton = () => {
 export const SettingsPageMobile = () => {
   const translate = useTranslate();
   const authProvider = useAuthProvider();
-  const logout = useLogout();
 
   if (!authProvider) return null;
 
@@ -119,9 +117,10 @@ export const SettingsPageMobile = () => {
           <div className="mt-auto pt-6 space-y-3 mb-4">
             <ChangePasswordButton />
             <Button
+              aria-label="Sign out of Holedo"
               variant="destructive"
               className="w-full text-base h-auto"
-              onClick={() => logout()}
+              onClick={() => window.location.assign("/auth/logout")}
             >
               <LogOut className="size-5 mr-3" />
               <Translate i18nKey="ra.auth.logout">Log out</Translate>

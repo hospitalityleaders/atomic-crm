@@ -109,10 +109,36 @@ jobs:
         run: npm ci
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium-headless-shell 1>/dev/null
-      - name: Install wait-on and serve
-        run: npm install -g wait-on serve
-      - name: Run Playwright tests
-        run: make test-e2e-ci
+      - name: Install wait-on
+        run: npm install -g wait-on
+      - name: Start PostgreSQL, Keycloak and object storage
+        run: |
+          docker compose --env-file dev/ci/holedo.env -f compose.local.yml up -d
+          docker compose --env-file dev/ci/holedo.env -f compose.local.yml wait keycloak-configure
+      - name: Build Holedo CRM
+        run: npm run build
+      - name: Start Holedo CRM
+        run: |
+          set -a
+          . dev/ci/holedo.env
+          set +a
+          npm start > "$RUNNER_TEMP/holedo-crm.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/holedo-crm.pid"
+          wait-on http-get://localhost:3000/api/ready
+      - name: Run Holedo integration test
+        run: npx playwright test --config playwright.holedo.config.ts
+      - name: Show service logs after a failure
+        if: failure()
+        run: |
+          cat "$RUNNER_TEMP/holedo-crm.log" || true
+          docker compose --env-file dev/ci/holedo.env -f compose.local.yml logs || true
+      - name: Stop Holedo integration services
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/holedo-crm.pid" ]; then
+            kill "$(cat "$RUNNER_TEMP/holedo-crm.pid")" || true
+          fi
+          docker compose --env-file dev/ci/holedo.env -f compose.local.yml down
 
     build:
         name: 🔨 Build

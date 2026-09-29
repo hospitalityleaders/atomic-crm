@@ -226,6 +226,22 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/providers/holedo/index.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/providers/holedo/dataProvider.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/providers/holedo/authProvider.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/providers/holedo/api.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/providers/fakerest/index.ts",
           "type": "registry:component"
         },
@@ -866,6 +882,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/admin/RuntimeAdminPage.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/activity/ActivityLogNote.tsx",
           "type": "registry:component"
         },
@@ -923,6 +943,10 @@
         },
         {
           "path": "src/hooks/useBulkExport.tsx",
+          "type": "registry:hook"
+        },
+        {
+          "path": "src/hooks/use-public-theme.ts",
           "type": "registry:hook"
         },
         {

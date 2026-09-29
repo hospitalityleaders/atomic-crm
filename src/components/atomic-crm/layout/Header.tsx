@@ -1,6 +1,7 @@
 import { FileText, Import, Settings, User, Users } from "lucide-react";
 import { CanAccess, useTranslate, useUserMenu } from "ra-core";
 import { Link, matchPath, useLocation } from "react-router";
+import { useEffect, useState } from "react";
 import { RefreshButton } from "@/components/admin/refresh-button";
 import { ThemeModeToggle } from "@/components/admin/theme-mode-toggle";
 import { UserMenu } from "@/components/admin/user-menu";
@@ -9,9 +10,17 @@ import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { useConfigurationContext } from "../root/ConfigurationContext";
 import { ImportPage } from "../misc/ImportPage";
 import { ChangelogPage } from "../misc/ChangelogPage";
+import { api } from "../providers/holedo/api";
+
+type WorkspaceOption = {
+  id: string;
+  name: string;
+  workspace_type: "personal" | "company";
+  active: boolean;
+};
 
 const Header = () => {
-  const { darkModeLogo, lightModeLogo, title } = useConfigurationContext();
+  const { title } = useConfigurationContext();
   const location = useLocation();
   const translate = useTranslate();
 
@@ -31,21 +40,16 @@ const Header = () => {
   return (
     <>
       <nav className="grow">
-        <header className="bg-secondary">
-          <div className="px-4">
+        <header className="bg-[#384677] text-white shadow-sm">
+          <div className="px-5">
             <div className="flex justify-between items-center flex-1">
               <Link
                 to="/"
                 className="flex items-center gap-2 text-secondary-foreground no-underline"
               >
                 <img
-                  className="[.light_&]:hidden h-6"
-                  src={darkModeLogo}
-                  alt={title}
-                />
-                <img
-                  className="[.dark_&]:hidden h-6"
-                  src={lightModeLogo}
+                  className="h-8 w-8 object-contain"
+                  src="/assets/branding/1gc-holedo-icon-for-dark-bg.png"
                   alt={title}
                 />
                 <h1 className="text-xl font-semibold">{title}</h1>
@@ -80,10 +84,11 @@ const Header = () => {
                   />
                 </nav>
               </div>
-              <div className="flex items-center">
+              <div className="flex items-center gap-1">
+                <WorkspaceSwitcher />
                 <ThemeModeToggle />
                 <RefreshButton />
-                <UserMenu>
+                <UserMenu logoutHref="/auth/logout">
                   <ProfileMenu />
                   <CanAccess resource="sales" action="list">
                     <UsersMenu />
@@ -123,6 +128,45 @@ const NavigationTab = ({
     {label}
   </Link>
 );
+
+const WorkspaceSwitcher = () => {
+  const [workspaces, setWorkspaces] = useState<WorkspaceOption[]>([]);
+  useEffect(() => {
+    api<{ data: WorkspaceOption[] }>("/api/workspaces")
+      .then((result) => setWorkspaces(result.data))
+      .catch(() => setWorkspaces([]));
+  }, []);
+  const active = workspaces.find((workspace) => workspace.active);
+  if (!active) return null;
+  return (
+    <select
+      aria-label="Current CRM workspace"
+      value={active.id}
+      onChange={async (event) => {
+        await api("/api/session/workspace", {
+          method: "POST",
+          body: JSON.stringify({ workspaceId: event.target.value }),
+        });
+        window.localStorage.removeItem("RaStore.auth.current_sale");
+        window.location.reload();
+      }}
+      className="mr-2 max-w-48 rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-sm font-semibold text-white outline-none hover:bg-white/15"
+    >
+      {workspaces.map((workspace) => (
+        <option
+          key={workspace.id}
+          value={workspace.id}
+          className="text-[#26324a]"
+        >
+          {workspace.name}
+          {workspace.workspace_type === "personal"
+            ? " · Personal"
+            : " · Company"}
+        </option>
+      ))}
+    </select>
+  );
+};
 
 const UsersMenu = () => {
   const translate = useTranslate();

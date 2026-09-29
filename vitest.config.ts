@@ -59,6 +59,7 @@ export default defineConfig({
             "supabase/**",
             ".supabase-e2e/**",
             "e2e/**/*.spec.{ts,tsx}",
+            "e2e-holedo/**",
             // Harness hook tests are Node-only (they import node:fs / node:path
             // and spawn subprocesses); they run under the "claude" project below.
             ".claude/**",

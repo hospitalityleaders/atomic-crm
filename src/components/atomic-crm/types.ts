@@ -125,6 +125,8 @@ export type Deal = {
   created_at: string;
   updated_at: string;
   archived_at?: string;
+  archived_stage_id?: string;
+  archived_position?: number;
   expected_closing_date: string;
   sales_id: Identifier;
   index: number;
@@ -218,7 +220,7 @@ export interface LabeledValue {
   label: string;
 }
 
-export type DealStage = LabeledValue;
+export type DealStage = LabeledValue & { kind?: "open" | "won" | "lost" };
 
 export interface NoteStatus extends LabeledValue {
   color: string;

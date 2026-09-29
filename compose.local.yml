@@ -1,0 +1,70 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: holedo_crm
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_MIGRATION_PASSWORD:-local-postgres-password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - holedo-crm-postgres:/var/lib/postgresql/data
+      - ./dev/postgres/001-users.sql:/docker-entrypoint-initdb.d/001-users.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d holedo_crm"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.7.4
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-local-keycloak-admin}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-local-holedo-crm-secret}
+      KEYCLOAK_TEST_USER_PASSWORD: ${KEYCLOAK_TEST_USER_PASSWORD:-local-holedo-owner}
+      KEYCLOAK_TEST_COLLEAGUE_PASSWORD: ${KEYCLOAK_TEST_COLLEAGUE_PASSWORD:-local-holedo-colleague}
+    ports:
+      - "8080:8080"
+    volumes:
+      - holedo-crm-keycloak:/opt/keycloak/data
+      - ./dev/keycloak/holedo-local-realm.json:/opt/keycloak/data/import/holedo-local-realm.json:ro
+
+  keycloak-configure:
+    image: quay.io/keycloak/keycloak:26.7.4
+    depends_on:
+      keycloak:
+        condition: service_started
+    environment:
+      KEYCLOAK_ADMIN_USERNAME: admin
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-local-keycloak-admin}
+      KEYCLOAK_TEST_USER_EMAIL: ${KEYCLOAK_TEST_USER_EMAIL:-crm.owner@local.holedo.test}
+      KEYCLOAK_TEST_USER_PASSWORD: ${KEYCLOAK_TEST_USER_PASSWORD:-local-holedo-owner}
+      KEYCLOAK_TEST_COLLEAGUE_EMAIL: ${KEYCLOAK_TEST_COLLEAGUE_EMAIL:-crm.colleague@local.holedo.test}
+      KEYCLOAK_TEST_COLLEAGUE_PASSWORD: ${KEYCLOAK_TEST_COLLEAGUE_PASSWORD:-local-holedo-colleague}
+    volumes:
+      - ./dev/keycloak/configure-local.sh:/opt/keycloak/configure-local.sh:ro
+    entrypoint: ["/bin/sh", "/opt/keycloak/configure-local.sh"]
+    restart: "no"
+
+  object-storage:
+    image: chrislusf/seaweedfs:latest
+    command:
+      [
+        "server",
+        "-s3",
+        "-dir=/data",
+        "-s3.port=8333",
+        "-s3.config=/etc/seaweedfs/s3.json",
+      ]
+    ports:
+      - "9000:8333"
+    volumes:
+      - holedo-crm-objects:/data
+      - ./dev/object-storage/s3.json:/etc/seaweedfs/s3.json:ro
+
+volumes:
+  holedo-crm-postgres:
+  holedo-crm-keycloak:
+  holedo-crm-objects:
