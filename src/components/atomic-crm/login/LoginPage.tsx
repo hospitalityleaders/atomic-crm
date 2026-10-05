@@ -1,19 +1,32 @@
 import {
   ArrowRight,
   Building2,
+  Lock,
   MessagesSquare,
   UsersRound,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Moon, Sun } from "lucide-react";
 import { usePublicTheme } from "@/hooks/use-public-theme";
+
+type NavigationItem = {
+  id?: number;
+  label: string;
+  url: string;
+  sort_order: number;
+  enabled: boolean;
+};
 
 type PublicRuntime = {
   landing_headline: string;
   landing_subtitle: string;
+  header_background_color: string;
+  header_text_color: string;
   privacy_url: string;
+  cookie_url: string;
   terms_url: string;
   imprint_url: string;
+  privacy_settings_enabled: boolean;
+  navigation: NavigationItem[];
   authMode?: "demo" | "oidc" | "logged-out";
   loginUrl?: string;
   signupUrl?: string;
@@ -26,9 +39,39 @@ export const LoginPage = ({ redirectTo = "/app" }: { redirectTo?: string }) => {
     landing_headline: "Track sales and customer conversations",
     landing_subtitle:
       "Keep leads, deals and every customer conversation together in one clear workspace built for hospitality teams.",
+    header_background_color: "#384677",
+    header_text_color: "#ffffff",
     privacy_url: "https://www.iubenda.com/privacy-policy/84980546",
+    cookie_url: "https://www.iubenda.com/privacy-policy/84980546/cookie-policy",
     terms_url: "https://www.iubenda.com/terms-and-conditions/84980546",
     imprint_url: "https://www.holedo.com/imprint/",
+    privacy_settings_enabled: true,
+    navigation: [
+      {
+        label: "Workspace",
+        url: "https://office.holedo.com/",
+        sort_order: 0,
+        enabled: true,
+      },
+      {
+        label: "Docs",
+        url: "https://docs.holedo.com/",
+        sort_order: 10,
+        enabled: true,
+      },
+      {
+        label: "Sheets",
+        url: "https://sheets.holedo.com/",
+        sort_order: 20,
+        enabled: true,
+      },
+      {
+        label: "Meet",
+        url: "https://meet.holedo.com/",
+        sort_order: 30,
+        enabled: true,
+      },
+    ],
   });
   const loginUrl = runtime.loginUrl || `/auth/login?returnTo=${returnTo}`;
   const signupUrl = runtime.signupUrl || `/auth/register?returnTo=${returnTo}`;
@@ -38,44 +81,66 @@ export const LoginPage = ({ redirectTo = "/app" }: { redirectTo?: string }) => {
       .then((data) => setRuntime((current) => ({ ...current, ...data })))
       .catch(() => undefined);
   }, []);
+  useEffect(() => {
+    if (!runtime.privacy_settings_enabled) return;
+    const existing = document.querySelector<HTMLScriptElement>(
+      'script[data-holedo-iubenda="true"]',
+    );
+    if (existing) return;
+    const script = document.createElement("script");
+    script.src = "https://cdn.iubenda.com/iubenda.js";
+    script.async = true;
+    script.dataset.holedoIubenda = "true";
+    document.body.appendChild(script);
+  }, [runtime.privacy_settings_enabled]);
+
+  const navigation = runtime.navigation
+    .filter((item) => item.enabled)
+    .sort((a, b) => a.sort_order - b.sort_order);
+
   return (
     <main className="min-h-screen bg-[#f4f6f8] text-[#26324a] transition-colors dark:bg-[#15181f] dark:text-[#f5f7fb]">
-      <header className="border-b border-white/10 bg-[#384677] text-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-10">
-          <a href="/" className="flex items-center gap-3">
-            <img
-              src="/assets/branding/1gc-holedo-icon-for-dark-bg.png"
-              alt="Holedo"
-              className="h-9 w-9 object-contain"
-            />
-            <span className="text-xl font-semibold tracking-tight">
-              Holedo CRM
-            </span>
-          </a>
-          <nav className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="hidden items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-white/80 hover:bg-white/10 sm:flex"
-            >
-              {theme === "dark" ? (
-                <Sun className="h-4 w-4" />
-              ) : (
-                <Moon className="h-4 w-4" />
-              )}
-              {theme === "dark" ? "Light" : "Dark"}
-            </button>
+      <header
+        className="border-b border-white/10"
+        style={{
+          backgroundColor: runtime.header_background_color,
+          color: runtime.header_text_color,
+        }}
+      >
+        <div className="flex h-11 items-stretch justify-between px-4 sm:px-5">
+          <div className="flex min-w-0 items-stretch">
+            <a href="/" className="flex w-14 shrink-0 items-center">
+              <span className="sr-only">Holedo CRM</span>
+              <img
+                src="/assets/branding/1gc-holedo-icon-for-dark-bg.png"
+                alt="Holedo"
+                className="h-8 w-12 object-contain object-left"
+              />
+            </a>
+            <nav className="flex min-w-0 items-stretch overflow-x-auto">
+              {navigation.map((item) => (
+                <a
+                  key={`${item.label}-${item.url}`}
+                  href={item.url}
+                  className="flex shrink-0 items-center border-b-2 border-transparent px-3 text-[13px] font-semibold opacity-70 transition hover:border-[#32a3fd] hover:opacity-100"
+                >
+                  {item.label}
+                </a>
+              ))}
+            </nav>
+          </div>
+          <nav className="flex shrink-0 items-stretch gap-2 py-1">
             <a
               href={loginUrl}
-              className="rounded-md px-4 py-2 text-sm font-semibold text-white/90 hover:bg-white/10 hover:text-white"
+              className="flex items-center gap-2 bg-[#202b55] px-4 text-[13px] font-semibold text-white hover:bg-[#172044]"
             >
-              Sign in
+              <Lock className="h-3.5 w-3.5" /> Login
             </a>
             <a
               href={signupUrl}
-              className="rounded-md bg-[#7dc81b] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#70b918]"
+              className="flex items-center bg-[#32a3fd] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-[#178fe8]"
             >
-              Get started
+              Sign Up Free
             </a>
           </nav>
         </div>
@@ -85,7 +150,7 @@ export const LoginPage = ({ redirectTo = "/app" }: { redirectTo?: string }) => {
         <div className="absolute inset-0 opacity-20 [background-image:radial-gradient(circle_at_75%_30%,#32a3fd_0,transparent_38%)]" />
         <div className="relative mx-auto grid max-w-7xl gap-14 px-6 py-20 lg:grid-cols-[1.05fr_.95fr] lg:px-10 lg:py-28">
           <div className="max-w-3xl">
-            <p className="mb-5 text-sm font-semibold uppercase tracking-[0.22em] text-[#7dc81b]">
+            <p className="mb-5 text-sm font-semibold uppercase tracking-[0.22em] text-[#32a3fd]">
               Holedo CRM
             </p>
             <h1 className="text-5xl font-bold leading-[1.06] tracking-tight sm:text-6xl">
@@ -97,7 +162,7 @@ export const LoginPage = ({ redirectTo = "/app" }: { redirectTo?: string }) => {
             <div className="mt-10 flex flex-wrap gap-4">
               <a
                 href={signupUrl}
-                className="inline-flex items-center gap-2 rounded-md bg-[#7dc81b] px-6 py-3.5 font-semibold text-white shadow-lg shadow-black/10 transition-colors hover:bg-[#70b918]"
+                className="inline-flex items-center gap-2 rounded-md bg-[#32a3fd] px-6 py-3.5 font-semibold text-white shadow-lg shadow-black/10 transition-colors hover:bg-[#178fe8]"
               >
                 {runtime.authMode === "demo"
                   ? "Open the CRM"
@@ -183,17 +248,41 @@ export const LoginPage = ({ redirectTo = "/app" }: { redirectTo?: string }) => {
           );
         })}
       </section>
-      <footer className="border-t border-[#e2e7ef] px-6 py-8 text-center text-sm text-[#68748a] dark:border-white/10 dark:text-[#8b96a7]">
-        <div className="flex flex-wrap justify-center gap-6">
-          <a href={runtime.privacy_url} className="hover:text-[#32a3fd]">
+      <footer className="border-t border-[#e2e7ef] px-6 py-8 text-center text-xs text-[#8b96a7] dark:border-white/10">
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <a
+            href={runtime.privacy_url}
+            className="iubenda-white no-brand iubenda-noiframe iubenda-embed hover:text-[#32a3fd]"
+          >
             Privacy
           </a>
+          <span aria-hidden="true">·</span>
+          <a
+            href={runtime.cookie_url}
+            className="iubenda-white no-brand iubenda-noiframe iubenda-embed hover:text-[#32a3fd]"
+          >
+            Cookies
+          </a>
+          <span aria-hidden="true">·</span>
           <a href={runtime.terms_url} className="hover:text-[#32a3fd]">
             Terms
           </a>
+          <span aria-hidden="true">·</span>
           <a href={runtime.imprint_url} className="hover:text-[#32a3fd]">
             Imprint
           </a>
+          {runtime.privacy_settings_enabled ? (
+            <>
+              <span aria-hidden="true">·</span>
+              <button
+                type="button"
+                className="iubenda-cs-preferences-link hover:text-[#32a3fd]"
+              >
+                Privacy settings
+              </button>
+            </>
+          ) : null}
+          <span aria-hidden="true">·</span>
           <button
             type="button"
             onClick={() =>

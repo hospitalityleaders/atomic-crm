@@ -116,6 +116,11 @@ function sameOrigin(req: Request) {
   }
 }
 
+function runtimeColor(value: unknown, fallback: string) {
+  const color = String(value ?? "").trim();
+  return /^#[0-9a-f]{6}$/i.test(color) ? color.toLowerCase() : fallback;
+}
+
 app.set("trust proxy", trustProxySetting());
 
 app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
@@ -124,13 +129,21 @@ app.get("/api/ready", async (_req, res) => {
   res.json({ status: "ready" });
 });
 app.get("/api/runtime", async (_req, res) => {
-  const result = await db.query(
-    `SELECT meta_title, meta_description, landing_headline, landing_subtitle,
-            privacy_url, cookie_url, terms_url, imprint_url
-     FROM crm_runtime_settings WHERE id = TRUE`,
-  );
+  const [result, navigation] = await Promise.all([
+    db.query(
+      `SELECT meta_title, meta_description, landing_headline, landing_subtitle,
+              header_background_color, header_text_color, privacy_url,
+              cookie_url, terms_url, imprint_url, privacy_settings_enabled
+       FROM crm_runtime_settings WHERE id = TRUE`,
+    ),
+    db.query(
+      `SELECT id, label, url, sort_order, enabled
+       FROM crm_navigation WHERE enabled = TRUE ORDER BY sort_order, id`,
+    ),
+  ]);
   res.json({
     ...result.rows[0],
+    navigation: navigation.rows,
     oidcConfigured: oidcConfigured(),
     authMode: currentAuthMode(),
     loginUrl:
@@ -248,6 +261,15 @@ app.put(
       "imprint_url",
     ];
     const values = allowed.map((key) => String(req.body?.[key] ?? ""));
+    const headerBackgroundColor = runtimeColor(
+      req.body?.header_background_color,
+      "#384677",
+    );
+    const headerTextColor = runtimeColor(
+      req.body?.header_text_color,
+      "#ffffff",
+    );
+    const privacySettingsEnabled = req.body?.privacy_settings_enabled !== false;
     const navigation = Array.isArray(req.body?.navigation)
       ? req.body.navigation.slice(0, 30)
       : [];
@@ -258,9 +280,16 @@ app.put(
         `UPDATE crm_runtime_settings SET
         meta_title = $1, meta_description = $2, landing_headline = $3,
         landing_subtitle = $4, privacy_url = $5, cookie_url = $6,
-        terms_url = $7, imprint_url = $8, updated_at = NOW()
+        terms_url = $7, imprint_url = $8, header_background_color = $9,
+        header_text_color = $10, privacy_settings_enabled = $11,
+        updated_at = NOW()
        WHERE id = TRUE RETURNING *`,
-        values,
+        [
+          ...values,
+          headerBackgroundColor,
+          headerTextColor,
+          privacySettingsEnabled,
+        ],
       );
       await client.query("DELETE FROM crm_navigation");
       for (const [index, item] of navigation.entries()) {
