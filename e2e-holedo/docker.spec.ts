@@ -72,6 +72,24 @@ test("Holedo public theme and token-only CRM admin work", async ({ page }) => {
       name: "Track sales and customer conversations",
     }),
   ).toBeVisible();
+  await expect(page).toHaveTitle("Holedo CRM");
+  await expect(page.locator('link[rel="icon"]')).toHaveAttribute(
+    "href",
+    /1gc-holedo-icon-for-dark-bg\.png/,
+  );
+  await expect(page.locator("header")).toHaveCSS("border-bottom-width", "0px");
+  await expect(
+    page.getByRole("link", {
+      name: /Create your workspace|Open the CRM/,
+    }),
+  ).toHaveCSS("border-radius", "2px");
+  await expect(page.getByRole("link", { name: "Privacy" })).toHaveCSS(
+    "background-color",
+    "rgba(0, 0, 0, 0)",
+  );
+  await expect(page.getByRole("link", { name: "Terms" })).toHaveClass(
+    /iubenda-embed/,
+  );
   await page.getByRole("button", { name: "Theme: Auto" }).click();
   await expect(page.locator("html")).toHaveClass(/light/);
 
