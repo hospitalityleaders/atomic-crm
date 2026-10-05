@@ -72,6 +72,11 @@ test("Holedo public theme and token-only CRM admin work", async ({ page }) => {
       name: "Track sales and customer conversations",
     }),
   ).toBeVisible();
+  await expect(page).toHaveTitle("Holedo CRM");
+  await expect(page.locator('link[rel="icon"]')).toHaveAttribute(
+    "href",
+    /1gc-holedo-icon-for-dark-bg\.png/,
+  );
   await page.getByRole("button", { name: "Theme: Auto" }).click();
   await expect(page.locator("html")).toHaveClass(/light/);
 

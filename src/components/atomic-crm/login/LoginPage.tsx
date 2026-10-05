@@ -17,6 +17,8 @@ type NavigationItem = {
 };
 
 type PublicRuntime = {
+  meta_title: string;
+  meta_description: string;
   landing_headline: string;
   landing_subtitle: string;
   header_background_color: string;
@@ -36,6 +38,8 @@ export const LoginPage = ({ redirectTo = "/app" }: { redirectTo?: string }) => {
   const returnTo = encodeURIComponent(redirectTo);
   const { theme, setTheme } = usePublicTheme();
   const [runtime, setRuntime] = useState<PublicRuntime>({
+    meta_title: "Holedo CRM",
+    meta_description: "Track sales and customer conversations.",
     landing_headline: "Track sales and customer conversations",
     landing_subtitle:
       "Keep leads, deals and every customer conversation together in one clear workspace built for hospitality teams.",
@@ -81,6 +85,18 @@ export const LoginPage = ({ redirectTo = "/app" }: { redirectTo?: string }) => {
       .then((data) => setRuntime((current) => ({ ...current, ...data })))
       .catch(() => undefined);
   }, []);
+  useEffect(() => {
+    document.title = runtime.meta_title;
+    let description = document.head.querySelector<HTMLMetaElement>(
+      'meta[name="description"]',
+    );
+    if (!description) {
+      description = document.createElement("meta");
+      description.name = "description";
+      document.head.appendChild(description);
+    }
+    description.content = runtime.meta_description;
+  }, [runtime.meta_description, runtime.meta_title]);
   useEffect(() => {
     if (!runtime.privacy_settings_enabled) return;
     const existing = document.querySelector<HTMLScriptElement>(
