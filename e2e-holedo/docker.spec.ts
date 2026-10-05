@@ -83,10 +83,9 @@ test("Holedo public theme and token-only CRM admin work", async ({ page }) => {
       name: /Create your workspace|Open the CRM/,
     }),
   ).toHaveCSS("border-radius", "2px");
-  await expect(page.getByRole("link", { name: "Privacy" })).toHaveCSS(
-    "background-color",
-    "rgba(0, 0, 0, 0)",
-  );
+  await expect(
+    page.getByRole("link", { name: "Privacy", exact: true }),
+  ).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
   await expect(page.getByRole("link", { name: "Terms" })).toHaveClass(
     /iubenda-embed/,
   );
