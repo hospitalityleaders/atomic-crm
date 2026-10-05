@@ -7,7 +7,7 @@ async function signIn(page: Page, email: string, password: string) {
       name: "Track sales and customer conversations",
     }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Sign in", exact: true }).click();
+  await page.getByRole("link", { name: "Login", exact: true }).click();
   await page.locator('input[name="username"]').fill(email);
   await page.locator('input[name="password"]').fill(password);
   await page.locator("#kc-login").click();
@@ -85,6 +85,9 @@ test("Holedo public theme and token-only CRM admin work", async ({ page }) => {
   await expect(page.getByLabel("Homepage headline")).toHaveValue(
     "Track sales and customer conversations",
   );
+  await expect(
+    page.getByLabel("Header background colour hex value"),
+  ).toHaveValue("#384677");
 });
 
 test("Holedo identity, workspaces and storage work together", async ({

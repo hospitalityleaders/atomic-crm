@@ -15,10 +15,13 @@ type RuntimeSettings = {
   meta_description: string;
   landing_headline: string;
   landing_subtitle: string;
+  header_background_color: string;
+  header_text_color: string;
   privacy_url: string;
   cookie_url: string;
   terms_url: string;
   imprint_url: string;
+  privacy_settings_enabled: boolean;
   navigation: NavigationItem[];
 };
 
@@ -28,10 +31,13 @@ const emptySettings: RuntimeSettings = {
   landing_headline: "Track sales and customer conversations",
   landing_subtitle:
     "Keep leads, deals and every customer conversation together in one clear workspace.",
+  header_background_color: "#384677",
+  header_text_color: "#ffffff",
   privacy_url: "",
   cookie_url: "",
   terms_url: "",
   imprint_url: "",
+  privacy_settings_enabled: true,
   navigation: [],
 };
 
@@ -266,6 +272,33 @@ export function RuntimeAdminPage() {
               </div>
             </AdminCard>
             <AdminCard
+              title="Header colours"
+              copy="Set the public menu-bar background and font colours. Changes appear immediately after saving."
+            >
+              <div className="grid gap-4 sm:grid-cols-2">
+                <AdminColorInput
+                  label="Header background colour"
+                  value={settings.header_background_color}
+                  onChange={(value) =>
+                    setSettings((current) => ({
+                      ...current,
+                      header_background_color: value,
+                    }))
+                  }
+                />
+                <AdminColorInput
+                  label="Header font colour"
+                  value={settings.header_text_color}
+                  onChange={(value) =>
+                    setSettings((current) => ({
+                      ...current,
+                      header_text_color: value,
+                    }))
+                  }
+                />
+              </div>
+            </AdminCard>
+            <AdminCard
               title="Homepage, SEO and sharing"
               copy="These values control the public CRM product page and search previews."
             >
@@ -333,6 +366,19 @@ export function RuntimeAdminPage() {
                     }
                   />
                 ))}
+                <label className="flex items-center gap-2 text-sm font-semibold">
+                  <input
+                    type="checkbox"
+                    checked={settings.privacy_settings_enabled}
+                    onChange={(event) =>
+                      setSettings((current) => ({
+                        ...current,
+                        privacy_settings_enabled: event.target.checked,
+                      }))
+                    }
+                  />
+                  Show privacy settings in the footer
+                </label>
               </div>
             </AdminCard>
             <div className="flex justify-end gap-3">
@@ -438,6 +484,39 @@ function AdminInput({
           onChange={(event) => onChange(event.target.value)}
         />
       )}
+    </label>
+  );
+}
+
+function AdminColorInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="grid gap-1.5 text-sm font-semibold">
+      {label}
+      <span className="flex min-h-11 items-center gap-3 border border-[#d8dee8] bg-white px-3 dark:border-white/15 dark:bg-[#15181f]">
+        <input
+          aria-label={`${label} picker`}
+          className="h-7 w-9 cursor-pointer border-0 bg-transparent p-0"
+          type="color"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+        />
+        <input
+          aria-label={`${label} hex value`}
+          className="min-w-0 flex-1 bg-transparent font-mono uppercase outline-none"
+          maxLength={7}
+          pattern="#[0-9a-fA-F]{6}"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      </span>
     </label>
   );
 }
