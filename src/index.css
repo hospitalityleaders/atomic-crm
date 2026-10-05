@@ -210,6 +210,42 @@ body {
   font-family: "Source Sans Pro", ui-sans-serif, system-ui, sans-serif;
 }
 
+.holedo-legal-links a,
+.holedo-legal-links a:visited,
+.holedo-legal-links a:hover,
+.holedo-legal-links a:focus,
+.holedo-legal-links a:active,
+.holedo-legal-links a.iubenda-embed,
+.holedo-legal-links a.iubenda-white,
+.holedo-legal-links a.no-brand,
+.holedo-legal-links a.iubenda-noiframe,
+.holedo-legal-links a.iubenda-cs-preferences-link,
+.holedo-legal-links .theme-toggle {
+  all: unset !important;
+  display: inline !important;
+  cursor: pointer !important;
+  color: inherit !important;
+  font: inherit !important;
+}
+
+.holedo-legal-links a:hover,
+.holedo-legal-links .theme-toggle:hover {
+  color: currentColor !important;
+  opacity: 1;
+}
+
+.holedo-legal-links a:focus-visible,
+.holedo-legal-links .theme-toggle:focus-visible {
+  text-decoration: underline !important;
+  outline: none !important;
+}
+
+/* Privacy controls are available in the footer, so hide Iubenda's keyhole. */
+.iubenda-tp-btn:not([data-tp-nostyle]),
+.iubenda-tp-alert-btn:not([data-tp-nostyle]) {
+  display: none !important;
+}
+
 /* The mobile pull-to-refresh (see layout/PullToRefresh.tsx) owns the overscroll
    gesture: without this, Chrome for Android runs its own pull-to-refresh — a full
    page reload — on top of ours, and iOS rubber-bands the page under the indicator.

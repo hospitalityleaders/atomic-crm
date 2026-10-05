@@ -117,7 +117,6 @@ export const LoginPage = ({ redirectTo = "/app" }: { redirectTo?: string }) => {
   return (
     <main className="min-h-screen bg-[#f4f6f8] text-[#26324a] transition-colors dark:bg-[#15181f] dark:text-[#f5f7fb]">
       <header
-        className="border-b border-white/10"
         style={{
           backgroundColor: runtime.header_background_color,
           color: runtime.header_text_color,
@@ -163,8 +162,7 @@ export const LoginPage = ({ redirectTo = "/app" }: { redirectTo?: string }) => {
       </header>
 
       <section className="relative overflow-hidden bg-[#384677] text-white">
-        <div className="absolute inset-0 opacity-20 [background-image:radial-gradient(circle_at_75%_30%,#32a3fd_0,transparent_38%)]" />
-        <div className="relative mx-auto grid max-w-7xl gap-14 px-6 py-20 lg:grid-cols-[1.05fr_.95fr] lg:px-10 lg:py-28">
+        <div className="relative mx-auto grid max-w-7xl gap-14 px-6 pb-20 pt-12 lg:grid-cols-[1.05fr_.95fr] lg:px-10 lg:pb-24 lg:pt-16">
           <div className="max-w-3xl">
             <p className="mb-5 text-sm font-semibold uppercase tracking-[0.22em] text-[#32a3fd]">
               Holedo CRM
@@ -178,7 +176,7 @@ export const LoginPage = ({ redirectTo = "/app" }: { redirectTo?: string }) => {
             <div className="mt-10 flex flex-wrap gap-4">
               <a
                 href={signupUrl}
-                className="inline-flex items-center gap-2 rounded-md bg-[#32a3fd] px-6 py-3.5 font-semibold text-white shadow-lg shadow-black/10 transition-colors hover:bg-[#178fe8]"
+                className="inline-flex items-center gap-2 rounded-[2px] bg-[#32a3fd] px-6 py-3.5 font-semibold text-white shadow-lg shadow-black/10 transition-colors hover:bg-[#178fe8]"
               >
                 {runtime.authMode === "demo"
                   ? "Open the CRM"
@@ -187,15 +185,15 @@ export const LoginPage = ({ redirectTo = "/app" }: { redirectTo?: string }) => {
               </a>
               <a
                 href={loginUrl}
-                className="rounded-md border border-white/30 px-6 py-3.5 font-semibold text-white hover:bg-white/10"
+                className="rounded-[2px] border border-white/30 px-6 py-3.5 font-semibold text-white hover:bg-white/10"
               >
                 Sign in to CRM
               </a>
             </div>
           </div>
 
-          <div className="rounded-xl border border-white/15 bg-white/10 p-5 shadow-2xl backdrop-blur-sm">
-            <div className="rounded-lg bg-[#f3f5f9] p-5 text-[#26324a] dark:bg-[#20242d] dark:text-[#f5f7fb]">
+          <div className="rounded-[2px] border border-white/15 bg-white/10 p-5 shadow-2xl backdrop-blur-sm">
+            <div className="rounded-[2px] bg-[#f3f5f9] p-5 text-[#26324a] dark:bg-[#20242d] dark:text-[#f5f7fb]">
               <div className="mb-4 flex items-center justify-between">
                 <span className="font-semibold">Sales pipeline</span>
                 <span className="rounded-full bg-[#e9f7d7] px-3 py-1 text-xs font-semibold text-[#4f8410]">
@@ -206,7 +204,7 @@ export const LoginPage = ({ redirectTo = "/app" }: { redirectTo?: string }) => {
                 {["New lead", "Proposal", "Accepted"].map((stage, index) => (
                   <div
                     key={stage}
-                    className="rounded-md bg-white p-3 shadow-sm dark:bg-[#15181f]"
+                    className="rounded-[2px] bg-white p-3 shadow-sm dark:bg-[#15181f]"
                   >
                     <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#758099]">
                       {stage}
@@ -214,7 +212,7 @@ export const LoginPage = ({ redirectTo = "/app" }: { redirectTo?: string }) => {
                     {[0, 1].slice(0, index === 2 ? 1 : 2).map((card) => (
                       <div
                         key={card}
-                        className="mb-2 rounded border border-[#e0e5ed] p-2 last:mb-0 dark:border-white/10"
+                        className="mb-2 rounded-[2px] border border-[#e0e5ed] p-2 last:mb-0 dark:border-white/10"
                       >
                         <div className="h-2 w-4/5 rounded bg-[#cbd3df]" />
                         <div className="mt-2 h-2 w-1/2 rounded bg-[#e5e9ef]" />
@@ -253,7 +251,7 @@ export const LoginPage = ({ redirectTo = "/app" }: { redirectTo?: string }) => {
           return (
             <article
               key={String(title)}
-              className="rounded-lg border border-[#e2e7ef] bg-white p-7 shadow-sm dark:border-white/10 dark:bg-[#20242d]"
+              className="rounded-[2px] border border-[#e2e7ef] bg-white p-7 shadow-sm dark:border-white/10 dark:bg-[#20242d]"
             >
               <FeatureIcon className="mb-5 h-8 w-8 text-[#32a3fd]" />
               <h2 className="text-xl font-semibold">{String(title)}</h2>
@@ -265,37 +263,47 @@ export const LoginPage = ({ redirectTo = "/app" }: { redirectTo?: string }) => {
         })}
       </section>
       <footer className="border-t border-[#e2e7ef] px-6 py-8 text-center text-xs text-[#8b96a7] dark:border-white/10">
-        <div className="flex flex-wrap items-center justify-center gap-2">
+        <nav
+          aria-label="Legal"
+          className="holedo-legal-links flex flex-wrap items-center justify-center gap-x-[11px] gap-y-1"
+        >
           <a
             href={runtime.privacy_url}
-            className="iubenda-white no-brand iubenda-noiframe iubenda-embed hover:text-[#32a3fd]"
+            className="iubenda-white no-brand iubenda-noiframe iubenda-embed"
+            title="Privacy Policy"
           >
             Privacy
           </a>
           <span aria-hidden="true">·</span>
           <a
             href={runtime.cookie_url}
-            className="iubenda-white no-brand iubenda-noiframe iubenda-embed hover:text-[#32a3fd]"
+            className="iubenda-white no-brand iubenda-noiframe iubenda-embed"
+            title="Cookie Policy"
           >
             Cookies
           </a>
           <span aria-hidden="true">·</span>
-          <a href={runtime.terms_url} className="hover:text-[#32a3fd]">
+          <a
+            href={runtime.terms_url}
+            className="iubenda-white no-brand iubenda-noiframe iubenda-embed"
+            title="Terms and Conditions"
+          >
             Terms
           </a>
           <span aria-hidden="true">·</span>
-          <a href={runtime.imprint_url} className="hover:text-[#32a3fd]">
+          <a
+            href={runtime.imprint_url}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             Imprint
           </a>
           {runtime.privacy_settings_enabled ? (
             <>
               <span aria-hidden="true">·</span>
-              <button
-                type="button"
-                className="iubenda-cs-preferences-link hover:text-[#32a3fd]"
-              >
+              <a href="#" className="iubenda-cs-preferences-link">
                 Privacy settings
-              </button>
+              </a>
             </>
           ) : null}
           <span aria-hidden="true">·</span>
@@ -310,12 +318,12 @@ export const LoginPage = ({ redirectTo = "/app" }: { redirectTo?: string }) => {
                     : "light",
               )
             }
-            className="hover:text-[#32a3fd]"
+            className="theme-toggle"
           >
             Theme:{" "}
             {theme === "system" ? "Auto" : theme === "dark" ? "Dark" : "Light"}
           </button>
-        </div>
+        </nav>
       </footer>
     </main>
   );
