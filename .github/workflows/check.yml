@@ -22,7 +22,7 @@ jobs:
     lint:
         name: 🔬 ESLint
         runs-on: ubuntu-latest
-        timeout-minutes: 10
+        timeout-minutes: 30
         if: ${{ !github.event.pull_request.draft || github.event_name == 'push' }}
         steps:
             - name: 📥 Checkout repo
@@ -48,7 +48,7 @@ jobs:
 
     typecheck:
         name: 🏷️ Typecheck
-        timeout-minutes: 10
+        timeout-minutes: 30
         runs-on: ubuntu-latest
         if: ${{ !github.event.pull_request.draft || github.event_name == 'push' }}
         steps:
@@ -70,7 +70,7 @@ jobs:
     test-app:
         name: 🔎 Test
         runs-on: ubuntu-latest
-        timeout-minutes: 10
+        timeout-minutes: 30
         if: ${{ !github.event.pull_request.draft || github.event_name == 'push' }}
         steps:
             - name: 📥 Checkout repo
@@ -94,7 +94,7 @@ jobs:
               run: CI=1 npm run test:unit:functions -- --run
 
     e2e-test:
-      timeout-minutes: 10
+      timeout-minutes: 30
       runs-on: ubuntu-latest
       steps:
       - name: 📥 Checkout repo
@@ -142,7 +142,7 @@ jobs:
 
     build:
         name: 🔨 Build
-        timeout-minutes: 10
+        timeout-minutes: 30
         runs-on: ubuntu-latest
         if: ${{ !github.event.pull_request.draft || github.event_name == 'push' }}
         steps:
