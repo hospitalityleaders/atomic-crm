@@ -18,6 +18,8 @@ type RuntimeSettings = {
   landing_subtitle: string;
   header_background_color: string;
   header_text_color: string;
+  hero_background_color: string;
+  hero_height: number;
   accent_color: string;
   site_icon_url: string;
   og_image_url: string;
@@ -43,6 +45,8 @@ const emptySettings: RuntimeSettings = {
     "Keep leads, deals and every customer conversation together in one clear workspace.",
   header_background_color: "#384677",
   header_text_color: "#ffffff",
+  hero_background_color: "#384677",
+  hero_height: 560,
   accent_color: "#32a3fd",
   site_icon_url: "/assets/branding/1gc-holedo-icon-for-dark-bg.png",
   og_image_url: "",
@@ -161,7 +165,7 @@ export function RuntimeAdminPage() {
       {!connected ? (
         <section className="mx-auto max-w-4xl px-6 py-20">
           <div className="border border-[#e0e5ed] bg-white p-9 dark:border-white/10 dark:bg-[#20242d]">
-            <p className="mb-[5px] text-sm font-bold uppercase tracking-[.08em] text-[var(--holedo-accent)]">
+            <p className="mb-[5px] text-sm font-bold uppercase text-[var(--holedo-accent)]">
               CRM administration
             </p>
             <h1 className="text-5xl font-bold tracking-tight">Admin</h1>
@@ -205,7 +209,7 @@ export function RuntimeAdminPage() {
         <section className="mx-auto max-w-7xl px-6 py-14">
           <div className="mb-8 flex items-end justify-between gap-5">
             <div>
-              <p className="mb-[5px] text-sm font-bold uppercase tracking-[.08em] text-[var(--holedo-accent)]">
+              <p className="mb-[5px] text-sm font-bold uppercase text-[var(--holedo-accent)]">
                 CRM administration
               </p>
               <h1 className="text-5xl font-bold tracking-tight">
@@ -304,9 +308,9 @@ export function RuntimeAdminPage() {
             </AdminCard>
             <AdminCard
               title="Colours"
-              copy="Set the public menu bar and shared Holedo accent colour."
+              copy="Set the navigation bar, homepage hero and shared Holedo accent colours."
             >
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <AdminColorInput
                   label="Header background colour"
                   value={settings.header_background_color}
@@ -324,6 +328,16 @@ export function RuntimeAdminPage() {
                     setSettings((current) => ({
                       ...current,
                       header_text_color: value,
+                    }))
+                  }
+                />
+                <AdminColorInput
+                  label="Hero background colour"
+                  value={settings.hero_background_color}
+                  onChange={(value) =>
+                    setSettings((current) => ({
+                      ...current,
+                      hero_background_color: value,
                     }))
                   }
                 />
@@ -416,6 +430,23 @@ export function RuntimeAdminPage() {
                     }))
                   }
                 />
+                <AdminInput
+                  label="Hero section height (px)"
+                  type="number"
+                  min={360}
+                  max={1200}
+                  value={String(settings.hero_height)}
+                  onChange={(value) =>
+                    setSettings((current) => ({
+                      ...current,
+                      hero_height: Number(value),
+                    }))
+                  }
+                />
+                <p className="text-sm text-[#8b96a7]">
+                  Sets the minimum height on desktop. On smaller screens the
+                  hero expands to fit its content.
+                </p>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <AdminInput
                     label="Hero button text"
@@ -657,6 +688,8 @@ function AdminInput({
   type = "text",
   multiline = false,
   code = false,
+  min,
+  max,
   onChange,
 }: {
   label: string;
@@ -664,6 +697,8 @@ function AdminInput({
   type?: string;
   multiline?: boolean;
   code?: boolean;
+  min?: number;
+  max?: number;
   onChange: (value: string) => void;
 }) {
   const className = `min-h-11 w-full border border-[#d8dee8] bg-white px-3 py-2 text-foreground outline-none focus:border-[var(--holedo-accent)] dark:border-white/15 dark:bg-[#15181f] ${
@@ -682,6 +717,8 @@ function AdminInput({
       ) : (
         <input
           className={className}
+          min={min}
+          max={max}
           type={type}
           value={value}
           onChange={(event) => onChange(event.target.value)}

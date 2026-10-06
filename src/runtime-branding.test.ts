@@ -14,6 +14,32 @@ afterEach(() => {
 });
 
 describe("applyRuntimeBranding", () => {
+  it("applies separate navigation and hero presentation variables", () => {
+    applyRuntimeBranding({
+      header_background_color: "#384677",
+      header_text_color: "#aeb7cf",
+      hero_background_color: "#26324a",
+      hero_height: 640,
+    });
+
+    expect(
+      document.documentElement.style.getPropertyValue(
+        "--holedo-header-background",
+      ),
+    ).toBe("#384677");
+    expect(
+      document.documentElement.style.getPropertyValue("--holedo-header-text"),
+    ).toBe("#aeb7cf");
+    expect(
+      document.documentElement.style.getPropertyValue(
+        "--holedo-hero-background",
+      ),
+    ).toBe("#26324a");
+    expect(
+      document.documentElement.style.getPropertyValue("--holedo-hero-height"),
+    ).toBe("640px");
+  });
+
   it("does not execute code injection unless explicitly enabled", () => {
     applyRuntimeBranding({
       head_code: "<script>window.__holedoInjectionTest = 1</" + "script>",

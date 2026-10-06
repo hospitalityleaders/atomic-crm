@@ -24,6 +24,8 @@ type PublicRuntime = {
   landing_subtitle: string;
   header_background_color: string;
   header_text_color: string;
+  hero_background_color: string;
+  hero_height: number;
   accent_color: string;
   site_icon_url: string;
   og_image_url: string;
@@ -58,6 +60,8 @@ export const LoginPage = ({
       "Keep leads, deals and every customer conversation together in one clear workspace built for hospitality teams.",
     header_background_color: "#384677",
     header_text_color: "#ffffff",
+    hero_background_color: "#384677",
+    hero_height: 560,
     accent_color: "#32a3fd",
     site_icon_url: "/assets/branding/1gc-holedo-icon-for-dark-bg.png",
     og_image_url: "",
@@ -143,10 +147,29 @@ export const LoginPage = ({
     .filter((item) => item.enabled)
     .sort((a, b) => a.sort_order - b.sort_order);
 
+  const isActiveNavigationItem = (url: string) => {
+    try {
+      const target = new URL(url, window.location.origin);
+      return (
+        target.hostname === window.location.hostname &&
+        target.pathname.replace(/\/$/, "") ===
+          window.location.pathname.replace(/\/$/, "")
+      );
+    } catch {
+      return false;
+    }
+  };
+
   return (
     <main
       className="min-h-screen bg-[#f4f6f8] text-[#26324a] transition-colors dark:bg-[#15181f] dark:text-[#f5f7fb]"
-      style={{ "--holedo-accent": runtime.accent_color } as CSSProperties}
+      style={
+        {
+          "--holedo-accent": runtime.accent_color,
+          "--holedo-header-text": runtime.header_text_color,
+          "--holedo-hero-height": `${runtime.hero_height}px`,
+        } as CSSProperties
+      }
     >
       <header
         style={{
@@ -165,15 +188,23 @@ export const LoginPage = ({
               />
             </a>
             <nav className="flex min-w-0 items-stretch overflow-x-auto">
-              {navigation.map((item) => (
-                <a
-                  key={`${item.label}-${item.url}`}
-                  href={item.url}
-                  className="holedo-nav-link flex shrink-0 items-center border-b-2 border-transparent px-3 text-[13px] font-semibold opacity-70 transition hover:opacity-100"
-                >
-                  {item.label}
-                </a>
-              ))}
+              {navigation.map((item) => {
+                const active = isActiveNavigationItem(item.url);
+                return (
+                  <a
+                    key={`${item.label}-${item.url}`}
+                    href={item.url}
+                    aria-current={active ? "page" : undefined}
+                    className={`holedo-nav-link flex shrink-0 items-center border-b-2 px-3 text-[13px] font-semibold transition hover:opacity-100 ${
+                      active
+                        ? "border-[var(--holedo-accent)] text-white opacity-100"
+                        : "border-transparent text-[var(--holedo-header-text)] opacity-70"
+                    }`}
+                  >
+                    {item.label}
+                  </a>
+                );
+              })}
             </nav>
           </div>
           <nav className="flex shrink-0 items-stretch gap-2 py-1">
@@ -193,10 +224,14 @@ export const LoginPage = ({
         </div>
       </header>
 
-      <section className="relative overflow-hidden bg-[#384677] text-white">
-        <div className="relative mx-auto grid max-w-7xl gap-14 px-6 pb-16 pt-8 lg:grid-cols-[1.05fr_.95fr] lg:px-10 lg:pb-20 lg:pt-10">
+      <section
+        className="relative overflow-hidden text-white lg:min-h-[var(--holedo-hero-height)]"
+        data-holedo-hero
+        style={{ backgroundColor: runtime.hero_background_color }}
+      >
+        <div className="relative mx-auto grid max-w-7xl gap-14 px-6 pb-16 pt-8 lg:min-h-[var(--holedo-hero-height)] lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:px-10 lg:py-10">
           <div className="max-w-3xl">
-            <p className="mb-[5px] text-sm font-semibold uppercase tracking-[0.08em] text-[var(--holedo-accent)]">
+            <p className="mb-[5px] text-sm font-semibold uppercase text-[var(--holedo-accent)]">
               Holedo CRM
             </p>
             <h1 className="text-5xl font-bold leading-[1.06] tracking-tight sm:text-6xl">
