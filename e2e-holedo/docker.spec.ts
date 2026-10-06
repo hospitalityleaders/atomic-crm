@@ -139,6 +139,27 @@ test("Holedo identity, workspaces and storage work together", async ({
     expect(ownerSession.body.data.role).toBe("owner");
     expect(ownerSession.body.data.platformAdmin).toBe(true);
 
+    const personalContact = await request(
+      owner.page,
+      "/api/resources/contacts",
+      {
+        method: "POST",
+        body: { first_name: "Personal", last_name: "Only" },
+      },
+    );
+    expect(personalContact.status).toBe(201);
+
+    const personalInvitation = await request(
+      owner.page,
+      "/api/workspaces/current/members",
+      {
+        method: "POST",
+        body: { email: "must-not-join@local.holedo.test", role: "editor" },
+      },
+    );
+    expect(personalInvitation.status).toBe(403);
+    expect(personalInvitation.body.error).toContain("Personal workspaces");
+
     await expect(owner.page.locator("header")).toBeVisible();
     await expect(owner.page.locator('header img[alt="Holedo"]')).toBeVisible();
     await expect(
@@ -185,6 +206,27 @@ test("Holedo identity, workspaces and storage work together", async ({
     });
     expect(switchOwner.status).toBe(200);
 
+    const companyContactsBeforeCreate = await request(
+      owner.page,
+      "/api/resources/contacts?perPage=1000",
+    );
+    expect(
+      companyContactsBeforeCreate.body.data.some(
+        (contact: { id: number }) =>
+          contact.id === personalContact.body.data.id,
+      ),
+    ).toBe(false);
+
+    const companyContact = await request(
+      owner.page,
+      "/api/resources/contacts",
+      {
+        method: "POST",
+        body: { first_name: "Company", last_name: "Only" },
+      },
+    );
+    expect(companyContact.status).toBe(201);
+
     const invitation = await request(
       owner.page,
       "/api/workspaces/current/members",
@@ -229,6 +271,17 @@ test("Holedo identity, workspaces and storage work together", async ({
       );
       expect(companyMembership.role).toBe("editor");
 
+      const colleaguePersonalContacts = await request(
+        colleague.page,
+        "/api/resources/contacts?perPage=1000",
+      );
+      expect(
+        colleaguePersonalContacts.body.data.some(
+          (contact: { id: number }) =>
+            contact.id === companyContact.body.data.id,
+        ),
+      ).toBe(false);
+
       const switchColleague = await request(
         colleague.page,
         "/api/session/workspace",
@@ -242,6 +295,23 @@ test("Holedo identity, workspaces and storage work together", async ({
       const colleagueSession = await request(colleague.page, "/api/session");
       expect(colleagueSession.body.data.workspaceType).toBe("company");
       expect(colleagueSession.body.data.role).toBe("editor");
+
+      const colleagueCompanyContacts = await request(
+        colleague.page,
+        "/api/resources/contacts?perPage=1000",
+      );
+      expect(
+        colleagueCompanyContacts.body.data.some(
+          (contact: { id: number }) =>
+            contact.id === companyContact.body.data.id,
+        ),
+      ).toBe(true);
+      expect(
+        colleagueCompanyContacts.body.data.some(
+          (contact: { id: number }) =>
+            contact.id === personalContact.body.data.id,
+        ),
+      ).toBe(false);
 
       const secondCompany = await request(
         colleague.page,

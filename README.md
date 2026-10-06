@@ -5,13 +5,17 @@ Holedo CRM is the Holedo-native customer relationship workspace, rebuilt on the 
 It provides:
 
 - a private CRM workspace for every Holedo member;
-- one optional shared company workspace per member;
+- access to at most one shared company workspace alongside the personal workspace;
 - user-editable deal pipelines;
 - contextual deal archiving and restoration;
 - Holedo branding and runtime administration;
 - Keycloak/OIDC single sign-on and global Holedo logout;
 - PostgreSQL tenant isolation with row-level security; and
 - private S3-compatible attachment storage.
+
+The ownership, membership and isolation rules are defined in the
+[canonical Holedo workspace model](./docs/HOLEDO_WORKSPACE_MODEL.md). CRM keeps
+personal and company data as separate tenants within the same deployment.
 
 The public product page is served at `/`. The authenticated browser workspace is served at `/workspace` with its CRM header, workspace switcher and avatar menu. The matching `/app` route is frameless for the Holedo Flutter web view. Both open the Deals board by default.
 

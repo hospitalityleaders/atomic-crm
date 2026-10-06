@@ -2,6 +2,8 @@
 
 Holedo CRM follows the same Portainer pattern as Holedo Office. The complete runtime configuration—including passwords and access keys—is entered directly in `compose.production.yml`. There is no `.env` file and no separate Portainer environment-variable configuration.
 
+The application follows the [canonical Holedo workspace model](./docs/HOLEDO_WORKSPACE_MODEL.md): every member keeps a private personal CRM workspace and may also use one shared company CRM workspace. Both are tenants in this deployment; neither requires a separate container.
+
 The application container is disposable. Structured CRM data lives in UpCloud Managed PostgreSQL and uploaded files live in UpCloud Managed Object Storage. No legacy data migration is required.
 
 ## 1. Prepare PostgreSQL

@@ -88,6 +88,11 @@ workspaceRouter.post("/:workspaceId/members", async (req, res) => {
       .status(403)
       .json({ error: "Workspace administrator access required" });
   }
+  if (session.workspaceType !== "company") {
+    return res
+      .status(403)
+      .json({ error: "Personal workspaces cannot contain other members" });
+  }
   const email = String(req.body?.email ?? "")
     .trim()
     .toLowerCase();
@@ -101,7 +106,13 @@ workspaceRouter.post("/:workspaceId/members", async (req, res) => {
   try {
     await client.query("BEGIN");
     const user = await client.query(
-      "SELECT id FROM crm_users WHERE lower(email) = $1",
+      `SELECT u.id, company.workspace_id AS company_workspace_id
+       FROM crm_users u
+       LEFT JOIN crm_workspace_members company
+         ON company.user_id = u.id
+        AND company.workspace_type = 'company'
+        AND company.status IN ('active', 'suspended')
+       WHERE lower(u.email) = $1`,
       [email],
     );
     if (!user.rows[0]) {
@@ -116,6 +127,15 @@ workspaceRouter.post("/:workspaceId/members", async (req, res) => {
       );
       await client.query("COMMIT");
       return res.status(202).json({ data: { email, role, status: "invited" } });
+    }
+    if (
+      user.rows[0].company_workspace_id &&
+      user.rows[0].company_workspace_id !== session.workspaceId
+    ) {
+      throw Object.assign(
+        new Error("This user already belongs to another company workspace"),
+        { status: 409 },
+      );
     }
     await client.query(
       `INSERT INTO crm_workspace_members
@@ -146,6 +166,15 @@ workspaceRouter.post("/:workspaceId/members", async (req, res) => {
     });
   } catch (error) {
     await client.query("ROLLBACK");
+    if (
+      (error as { code?: string }).code === "23505" &&
+      !(error as { status?: number }).status
+    ) {
+      throw Object.assign(
+        new Error("This user already belongs to another company workspace"),
+        { status: 409 },
+      );
+    }
     throw error;
   } finally {
     client.release();
