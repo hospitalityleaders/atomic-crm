@@ -147,9 +147,10 @@ app.get("/api/runtime", async (_req, res) => {
     db.query(
       `SELECT meta_title, meta_description, landing_headline, landing_subtitle,
               header_background_color, header_text_color,
-              hero_background_color, hero_height, accent_color,
+              hero_background_color, hero_height, eyebrow_color, accent_color,
               site_icon_url, og_image_url, login_url, signup_url,
-              hero_button_text, hero_button_url, head_code, footer_code,
+              hero_button_text, hero_button_url, hero_image_url,
+              head_code, footer_code,
               privacy_url, cookie_url, terms_url, imprint_url,
               privacy_settings_enabled
        FROM crm_runtime_settings WHERE id = TRUE`,
@@ -289,6 +290,7 @@ app.put(
       "cookie_url",
       "terms_url",
       "imprint_url",
+      "hero_image_url",
     ];
     const values = allowed.map((key) => String(req.body?.[key] ?? ""));
     const headerBackgroundColor = runtimeColor(
@@ -304,6 +306,7 @@ app.put(
       "#384677",
     );
     const heroHeight = runtimeInteger(req.body?.hero_height, 560, 360, 1200);
+    const eyebrowColor = runtimeColor(req.body?.eyebrow_color, "#32a3fd");
     const accentColor = runtimeColor(req.body?.accent_color, "#32a3fd");
     const privacySettingsEnabled = req.body?.privacy_settings_enabled !== false;
     const navigation = Array.isArray(req.body?.navigation)
@@ -319,10 +322,11 @@ app.put(
         login_url = $7, signup_url = $8, hero_button_text = $9,
         hero_button_url = $10, head_code = $11, footer_code = $12,
         privacy_url = $13, cookie_url = $14, terms_url = $15,
-        imprint_url = $16, header_background_color = $17,
-        header_text_color = $18, hero_background_color = $19,
-        hero_height = $20, accent_color = $21,
-        privacy_settings_enabled = $22,
+        imprint_url = $16, hero_image_url = $17,
+        header_background_color = $18, header_text_color = $19,
+        hero_background_color = $20, eyebrow_color = $21,
+        hero_height = $22, accent_color = $23,
+        privacy_settings_enabled = $24,
         updated_at = NOW()
        WHERE id = TRUE RETURNING *`,
         [
@@ -330,6 +334,7 @@ app.put(
           headerBackgroundColor,
           headerTextColor,
           heroBackgroundColor,
+          eyebrowColor,
           heroHeight,
           accentColor,
           privacySettingsEnabled,

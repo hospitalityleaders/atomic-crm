@@ -20,6 +20,7 @@ describe("applyRuntimeBranding", () => {
       header_text_color: "#aeb7cf",
       hero_background_color: "#26324a",
       hero_height: 640,
+      eyebrow_color: "#7dc81b",
     });
 
     expect(
@@ -38,6 +39,9 @@ describe("applyRuntimeBranding", () => {
     expect(
       document.documentElement.style.getPropertyValue("--holedo-hero-height"),
     ).toBe("640px");
+    expect(
+      document.documentElement.style.getPropertyValue("--holedo-eyebrow"),
+    ).toBe("#7dc81b");
   });
 
   it("does not execute code injection unless explicitly enabled", () => {

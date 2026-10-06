@@ -1,0 +1,3 @@
+ALTER TABLE crm_runtime_settings
+  ADD COLUMN IF NOT EXISTS hero_image_url TEXT NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS eyebrow_color TEXT NOT NULL DEFAULT '#32a3fd';

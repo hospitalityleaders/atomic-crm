@@ -20,6 +20,7 @@ type RuntimeSettings = {
   header_text_color: string;
   hero_background_color: string;
   hero_height: number;
+  eyebrow_color: string;
   accent_color: string;
   site_icon_url: string;
   og_image_url: string;
@@ -27,6 +28,7 @@ type RuntimeSettings = {
   signup_url: string;
   hero_button_text: string;
   hero_button_url: string;
+  hero_image_url: string;
   head_code: string;
   footer_code: string;
   privacy_url: string;
@@ -47,6 +49,7 @@ const emptySettings: RuntimeSettings = {
   header_text_color: "#ffffff",
   hero_background_color: "#384677",
   hero_height: 560,
+  eyebrow_color: "#32a3fd",
   accent_color: "#32a3fd",
   site_icon_url: "/assets/branding/1gc-holedo-icon-for-dark-bg.png",
   og_image_url: "",
@@ -54,6 +57,7 @@ const emptySettings: RuntimeSettings = {
   signup_url: "",
   hero_button_text: "Start Now",
   hero_button_url: "",
+  hero_image_url: "",
   head_code: "",
   footer_code: "",
   privacy_url: "",
@@ -310,7 +314,7 @@ export function RuntimeAdminPage() {
               title="Colours"
               copy="Set the navigation bar, homepage hero and shared Holedo accent colours."
             >
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 <AdminColorInput
                   label="Header background colour"
                   value={settings.header_background_color}
@@ -338,6 +342,16 @@ export function RuntimeAdminPage() {
                     setSettings((current) => ({
                       ...current,
                       hero_background_color: value,
+                    }))
+                  }
+                />
+                <AdminColorInput
+                  label="Homepage eyebrow colour"
+                  value={settings.eyebrow_color}
+                  onChange={(value) =>
+                    setSettings((current) => ({
+                      ...current,
+                      eyebrow_color: value,
                     }))
                   }
                 />
@@ -409,6 +423,20 @@ export function RuntimeAdminPage() {
               copy="Control the logged-out product page and its single call to action."
             >
               <div className="grid gap-4">
+                <AdminImageUrl
+                  label="Homepage hero image URL"
+                  value={settings.hero_image_url}
+                  previewAlt="Configured homepage hero image"
+                  onChange={(value) =>
+                    setSettings((current) => ({
+                      ...current,
+                      hero_image_url: value,
+                    }))
+                  }
+                />
+                <p className="text-sm text-[#8b96a7]">
+                  Leave this empty to use the built-in sales pipeline preview.
+                </p>
                 <AdminInput
                   label="Homepage headline"
                   value={settings.landing_headline}
