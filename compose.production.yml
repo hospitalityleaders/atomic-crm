@@ -44,7 +44,8 @@ services:
       PLATFORM_ADMIN_ROLE: "holedo-platform-admin"
 
       # Token-only runtime administration at https://crm.holedo.com/admin/
-      ADMIN_EMAIL: "service@holedo.email"
+      # This is the shared test user's identity in temporary demo mode.
+      DEMO_USER_EMAIL: "service@holedo.email"
       ADMIN_TOKEN: "___________________________"
       ADMIN_SESSION_SECRET: "___________________________"
 

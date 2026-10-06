@@ -4,7 +4,7 @@ import {
   type OnDragEndResponder,
 } from "@hello-pangea/dnd";
 import isEqual from "lodash/isEqual";
-import { ArchiveRestore, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import {
   useDataProvider,
   useGetList,
@@ -13,7 +13,6 @@ import {
 } from "ra-core";
 import { useEffect, useState } from "react";
 
-import { Button } from "@/components/ui/button";
 import { useConfigurationContext } from "../root/ConfigurationContext";
 import type { CrmDataProvider } from "../providers/types";
 import type { Deal } from "../types";
@@ -123,44 +122,49 @@ export const DealListContent = () => {
 
       <Droppable droppableId={ARCHIVE_BIN}>
         {(provided, snapshot) => (
-          <button
+          <div
             ref={provided.innerRef}
             {...provided.droppableProps}
-            type="button"
-            onClick={() => setArchiveOpen((open) => !open)}
-            className={`mx-auto my-5 flex min-h-16 w-full max-w-xl items-center justify-center gap-3 rounded-lg border-2 border-dashed px-5 py-3 font-semibold transition-colors ${
+            className={`relative my-8 flex h-6 w-full items-center bg-[#fd3732] px-4 text-xs font-bold uppercase tracking-[0.08em] text-white transition-colors ${
               snapshot.isDraggingOver
-                ? "border-[#fd3732] bg-[#fff0ef] text-[#d62621]"
-                : "border-[#cbd3df] bg-[#f8f9fb] text-[#68748a] hover:border-[#fd3732] hover:text-[#d62621]"
+                ? "brightness-110 ring-4 ring-[#fd3732]/20"
+                : "hover:brightness-95"
             }`}
           >
-            <Trash2 className="h-5 w-5" />
-            Drop here to archive · {archivedQuery.total ?? 0} archived
-            {archiveOpen ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
+            <span>
+              Deal bin <span className="ml-1">{archivedQuery.total ?? 0}</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setArchiveOpen((open) => !open)}
+              className="absolute left-1/2 top-1/2 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-4 border-background bg-[#fd3732] text-white shadow-sm transition hover:scale-105 hover:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fd3732] focus-visible:ring-offset-2"
+              aria-expanded={archiveOpen}
+              aria-controls="archived-deals-board"
+              aria-label={
+                archiveOpen ? "Hide archived deals" : "Show archived deals"
+              }
+            >
+              <Trash2 className="h-5 w-5" />
+            </button>
+            <span className="sr-only">
+              Drop a deal here to archive it. Select the bin to show or hide
+              archived deals.
+            </span>
             {provided.placeholder}
-          </button>
+          </div>
         )}
       </Droppable>
 
       {archiveOpen ? (
         <section
-          className="mt-3 border-t-2 border-[#fd3732] pt-5"
+          id="archived-deals-board"
+          className="mt-2"
           aria-label="Archived deals"
         >
-          <div className="mb-5 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-[#d62621]">
-              <ArchiveRestore className="h-5 w-5" />
-              <h2 className="font-semibold">Archived pipeline</h2>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Drag a card back to the live board to restore its original stage
-              and position.
-            </p>
-          </div>
+          <p className="sr-only">
+            Drag an archived deal back to the live board to restore its prior
+            stage and position.
+          </p>
           <div className="flex gap-4 overflow-x-auto opacity-90">
             {dealStages.map((stage) => (
               <DealColumn
@@ -170,11 +174,6 @@ export const DealListContent = () => {
                 droppableId={`${ARCHIVE_PREFIX}${stage.value}`}
               />
             ))}
-          </div>
-          <div className="mt-4 flex justify-center">
-            <Button variant="ghost" onClick={() => setArchiveOpen(false)}>
-              Collapse archive
-            </Button>
           </div>
         </section>
       ) : null}

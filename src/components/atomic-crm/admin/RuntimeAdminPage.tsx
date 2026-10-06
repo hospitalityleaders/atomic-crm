@@ -1,6 +1,7 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type CSSProperties, type FormEvent } from "react";
 import { Moon, Sun } from "lucide-react";
 import { usePublicTheme } from "@/hooks/use-public-theme";
+import { applyRuntimeBranding } from "@/runtime-branding";
 
 type NavigationItem = {
   id?: number;
@@ -17,6 +18,15 @@ type RuntimeSettings = {
   landing_subtitle: string;
   header_background_color: string;
   header_text_color: string;
+  accent_color: string;
+  site_icon_url: string;
+  og_image_url: string;
+  login_url: string;
+  signup_url: string;
+  hero_button_text: string;
+  hero_button_url: string;
+  head_code: string;
+  footer_code: string;
   privacy_url: string;
   cookie_url: string;
   terms_url: string;
@@ -33,6 +43,15 @@ const emptySettings: RuntimeSettings = {
     "Keep leads, deals and every customer conversation together in one clear workspace.",
   header_background_color: "#384677",
   header_text_color: "#ffffff",
+  accent_color: "#32a3fd",
+  site_icon_url: "/assets/branding/1gc-holedo-icon-for-dark-bg.png",
+  og_image_url: "",
+  login_url: "",
+  signup_url: "",
+  hero_button_text: "Start Now",
+  hero_button_url: "",
+  head_code: "",
+  footer_code: "",
   privacy_url: "",
   cookie_url: "",
   terms_url: "",
@@ -71,6 +90,10 @@ export function RuntimeAdminPage() {
     }, 0);
     return () => window.clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    applyRuntimeBranding(settings);
+  }, [settings]);
 
   async function signIn(event: FormEvent) {
     event.preventDefault();
@@ -125,15 +148,23 @@ export function RuntimeAdminPage() {
     }));
 
   return (
-    <main className="min-h-screen bg-[#f4f6f8] text-[#26324a] transition-colors dark:bg-[#15181f] dark:text-[#f5f7fb]">
-      <AdminHeader theme={theme} setTheme={setTheme} />
+    <main
+      className="min-h-screen bg-[#f4f6f8] text-[#26324a] transition-colors dark:bg-[#15181f] dark:text-[#f5f7fb]"
+      style={{ "--holedo-accent": settings.accent_color } as CSSProperties}
+    >
+      <AdminHeader
+        theme={theme}
+        setTheme={setTheme}
+        backgroundColor={settings.header_background_color}
+        textColor={settings.header_text_color}
+      />
       {!connected ? (
         <section className="mx-auto max-w-4xl px-6 py-20">
           <div className="border border-[#e0e5ed] bg-white p-9 dark:border-white/10 dark:bg-[#20242d]">
-            <p className="text-sm font-bold uppercase tracking-[.14em] text-[#32a3fd]">
+            <p className="mb-[5px] text-sm font-bold uppercase tracking-[.08em] text-[var(--holedo-accent)]">
               CRM administration
             </p>
-            <h1 className="mt-8 text-5xl font-bold tracking-tight">Admin</h1>
+            <h1 className="text-5xl font-bold tracking-tight">Admin</h1>
             <p className="mt-8 text-xl text-[#8b96a7]">
               Use the server-side admin token to manage CRM presentation
               settings.
@@ -152,10 +183,10 @@ export function RuntimeAdminPage() {
                   value={token}
                   onChange={(event) => setToken(event.target.value)}
                   autoComplete="current-password"
-                  className="min-h-12 flex-1 border border-[#d8dee8] bg-white px-4 text-foreground outline-none focus:border-[#32a3fd] dark:border-white/15 dark:bg-[#15181f]"
+                  className="min-h-12 flex-1 border border-[#d8dee8] bg-white px-4 text-foreground outline-none focus:border-[var(--holedo-accent)] dark:border-white/15 dark:bg-[#15181f]"
                 />
                 <button
-                  className="bg-[#32a3fd] px-7 font-semibold text-white"
+                  className="bg-[var(--holedo-accent)] px-7 font-semibold text-white transition hover:brightness-90"
                   type="submit"
                 >
                   Connect
@@ -174,10 +205,10 @@ export function RuntimeAdminPage() {
         <section className="mx-auto max-w-7xl px-6 py-14">
           <div className="mb-8 flex items-end justify-between gap-5">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[.14em] text-[#32a3fd]">
+              <p className="mb-[5px] text-sm font-bold uppercase tracking-[.08em] text-[var(--holedo-accent)]">
                 CRM administration
               </p>
-              <h1 className="mt-7 text-5xl font-bold tracking-tight">
+              <h1 className="text-5xl font-bold tracking-tight">
                 Runtime settings
               </h1>
               <p className="mt-5 text-xl text-[#8b96a7]">
@@ -272,10 +303,10 @@ export function RuntimeAdminPage() {
               </div>
             </AdminCard>
             <AdminCard
-              title="Header colours"
-              copy="Set the public menu-bar background and font colours. Changes appear immediately after saving."
+              title="Colours"
+              copy="Set the public menu bar and shared Holedo accent colour."
             >
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-3">
                 <AdminColorInput
                   label="Header background colour"
                   value={settings.header_background_color}
@@ -296,13 +327,35 @@ export function RuntimeAdminPage() {
                     }))
                   }
                 />
+                <AdminColorInput
+                  label="Accent colour"
+                  value={settings.accent_color}
+                  onChange={(value) =>
+                    setSettings((current) => ({
+                      ...current,
+                      accent_color: value,
+                    }))
+                  }
+                />
               </div>
             </AdminCard>
             <AdminCard
-              title="Homepage, SEO and sharing"
-              copy="These values control the public CRM product page and search previews."
+              title="Branding, SEO and sharing"
+              copy="Set the browser icon and the information used by search engines and social previews."
             >
               <div className="grid gap-4">
+                <AdminImageUrl
+                  label="Site icon URL"
+                  value={settings.site_icon_url}
+                  previewAlt="Configured site icon"
+                  compact
+                  onChange={(value) =>
+                    setSettings((current) => ({
+                      ...current,
+                      site_icon_url: value,
+                    }))
+                  }
+                />
                 <AdminInput
                   label="Meta title"
                   value={settings.meta_title}
@@ -324,6 +377,24 @@ export function RuntimeAdminPage() {
                     }))
                   }
                 />
+                <AdminImageUrl
+                  label="Open Graph image URL"
+                  value={settings.og_image_url}
+                  previewAlt="Configured Open Graph image"
+                  onChange={(value) =>
+                    setSettings((current) => ({
+                      ...current,
+                      og_image_url: value,
+                    }))
+                  }
+                />
+              </div>
+            </AdminCard>
+            <AdminCard
+              title="Homepage"
+              copy="Control the logged-out product page and its single call to action."
+            >
+              <div className="grid gap-4">
                 <AdminInput
                   label="Homepage headline"
                   value={settings.landing_headline}
@@ -345,6 +416,90 @@ export function RuntimeAdminPage() {
                     }))
                   }
                 />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <AdminInput
+                    label="Hero button text"
+                    value={settings.hero_button_text}
+                    onChange={(value) =>
+                      setSettings((current) => ({
+                        ...current,
+                        hero_button_text: value,
+                      }))
+                    }
+                  />
+                  <AdminInput
+                    label="Hero button URL"
+                    value={settings.hero_button_url}
+                    onChange={(value) =>
+                      setSettings((current) => ({
+                        ...current,
+                        hero_button_url: value,
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+            </AdminCard>
+            <AdminCard
+              title="Access and account buttons"
+              copy="Set the destinations used by Login and Sign Up Free in the public header."
+            >
+              <div className="grid gap-4">
+                <AdminInput
+                  label="Login URL"
+                  value={settings.login_url}
+                  onChange={(value) =>
+                    setSettings((current) => ({
+                      ...current,
+                      login_url: value,
+                    }))
+                  }
+                />
+                <AdminInput
+                  label="Sign-up URL"
+                  value={settings.signup_url}
+                  onChange={(value) =>
+                    setSettings((current) => ({
+                      ...current,
+                      signup_url: value,
+                    }))
+                  }
+                />
+              </div>
+            </AdminCard>
+            <AdminCard
+              title="Code injection"
+              copy="Add trusted site-wide code without rebuilding. Injected code runs on the public page, browser workspace and embedded app, but never in this admin."
+            >
+              <div className="grid gap-4">
+                <AdminInput
+                  label="Header code injection"
+                  value={settings.head_code}
+                  multiline
+                  code
+                  onChange={(value) =>
+                    setSettings((current) => ({
+                      ...current,
+                      head_code: value,
+                    }))
+                  }
+                />
+                <AdminInput
+                  label="Footer code injection"
+                  value={settings.footer_code}
+                  multiline
+                  code
+                  onChange={(value) =>
+                    setSettings((current) => ({
+                      ...current,
+                      footer_code: value,
+                    }))
+                  }
+                />
+                <p className="text-sm font-semibold text-[#fd3732]">
+                  Only paste code you trust. Injected scripts can read and
+                  change anything displayed by the CRM.
+                </p>
               </div>
             </AdminCard>
             <AdminCard title="Legal" copy="Links shown in the CRM footer.">
@@ -389,7 +544,7 @@ export function RuntimeAdminPage() {
                 View CRM
               </a>
               <button
-                className="bg-[#32a3fd] px-6 py-3 font-semibold text-white"
+                className="bg-[var(--holedo-accent)] px-6 py-3 font-semibold text-white transition hover:brightness-90"
                 type="submit"
               >
                 Save settings
@@ -402,9 +557,17 @@ export function RuntimeAdminPage() {
   );
 }
 
-function AdminHeader({ theme, setTheme }: ReturnType<typeof usePublicTheme>) {
+function AdminHeader({
+  theme,
+  setTheme,
+  backgroundColor,
+  textColor,
+}: ReturnType<typeof usePublicTheme> & {
+  backgroundColor: string;
+  textColor: string;
+}) {
   return (
-    <header className="bg-[#384677] text-white">
+    <header style={{ backgroundColor, color: textColor }}>
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
         <a className="flex items-center gap-4" href="/">
           <img
@@ -428,6 +591,43 @@ function AdminHeader({ theme, setTheme }: ReturnType<typeof usePublicTheme>) {
         </button>
       </div>
     </header>
+  );
+}
+
+function AdminImageUrl({
+  label,
+  value,
+  previewAlt,
+  compact = false,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  previewAlt: string;
+  compact?: boolean;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="grid gap-3 border border-[#d8dee8] p-3 dark:border-white/15 sm:grid-cols-[auto_1fr] sm:items-center">
+      <div
+        className={`flex items-center justify-center bg-[#f4f6f8] dark:bg-[#15181f] ${
+          compact ? "h-16 w-16" : "aspect-[1.91/1] w-full sm:w-48"
+        }`}
+      >
+        {value ? (
+          <img
+            alt={previewAlt}
+            className="max-h-full max-w-full object-contain"
+            src={value}
+          />
+        ) : (
+          <span className="px-3 text-center text-xs text-[#8b96a7]">
+            No image configured
+          </span>
+        )}
+      </div>
+      <AdminInput label={label} value={value} onChange={onChange} />
+    </div>
   );
 }
 
@@ -456,16 +656,19 @@ function AdminInput({
   value,
   type = "text",
   multiline = false,
+  code = false,
   onChange,
 }: {
   label: string;
   value: string;
   type?: string;
   multiline?: boolean;
+  code?: boolean;
   onChange: (value: string) => void;
 }) {
-  const className =
-    "min-h-11 w-full border border-[#d8dee8] bg-white px-3 py-2 text-foreground outline-none focus:border-[#32a3fd] dark:border-white/15 dark:bg-[#15181f]";
+  const className = `min-h-11 w-full border border-[#d8dee8] bg-white px-3 py-2 text-foreground outline-none focus:border-[var(--holedo-accent)] dark:border-white/15 dark:bg-[#15181f] ${
+    code ? "font-mono text-xs" : ""
+  }`;
   return (
     <label className="grid gap-1.5 text-sm font-semibold capitalize">
       {label}

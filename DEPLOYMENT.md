@@ -58,7 +58,7 @@ Required client settings:
 - back-channel logout session required: enabled
 - client role used for platform administrators: `holedo-platform-admin`
 
-The first deployment uses `AUTH_MODE: "demo"`, so the CRM can be tested before the shared Holedo Keycloak client is ready. In demo mode, everyone who can reach `/app` shares the same temporary test workspace. Do not store live customer data in that workspace.
+The first deployment uses `AUTH_MODE: "demo"`, so the CRM can be tested before the shared Holedo Keycloak client is ready. In demo mode, everyone who can reach `/workspace` or `/app` shares the same temporary test workspace identified by `DEMO_USER_EMAIL`. Do not store live customer data in that workspace.
 
 When the production client is ready, copy its client secret into `OIDC_CLIENT_SECRET`, enter the exact realm URL in `OIDC_ISSUER_URL`, and change `AUTH_MODE` to `oidc`.
 
@@ -76,6 +76,8 @@ The filled, password-bearing `compose.production.private.yml` is ignored by Git.
 
 Runtime presentation settings are available at `https://crm.holedo.com/admin/`. This page accepts `ADMIN_TOKEN` from the YAML and does not require a Holedo login.
 
+The runtime admin also supports trusted header and footer code injection. These snippets run on the public page, browser workspace and embedded app, but not on the admin page itself. Treat the admin token like a production secret because injected scripts have full control of the CRM frontend.
+
 The stack connects to the existing external `npm_proxy` network with the alias `holedo-crm-web`. In Nginx Proxy Manager, route `crm.holedo.com` to:
 
 ```text
@@ -87,7 +89,7 @@ Block common exploits: enabled
 SSL: enabled with forced HTTPS
 ```
 
-The public product page is `https://crm.holedo.com/`. The authenticated application is `https://crm.holedo.com/app` and uses the CRM workspace header and avatar rather than the public product menu.
+The public product page is `https://crm.holedo.com/`. The full authenticated browser application is `https://crm.holedo.com/workspace`; it uses the CRM navigation, workspace switcher and avatar. The Flutter web-view entry point is `https://crm.holedo.com/app`; it renders the same CRM without the browser header. Both entry points open Deals by default and expose matching child routes such as `/workspace/contacts` and `/app/contacts`.
 
 ## 5. Deploy in Portainer
 
@@ -109,12 +111,14 @@ Check:
 https://crm.holedo.com/api/health
 https://crm.holedo.com/api/ready
 https://crm.holedo.com/
+https://crm.holedo.com/workspace
 https://crm.holedo.com/app
 ```
 
 Then verify:
 
 - a Holedo member can sign in through Keycloak;
+- `/workspace` includes the CRM header while `/app` is frameless;
 - the member receives a personal workspace;
 - a company workspace can contain multiple members;
 - one user cannot join two company workspaces;

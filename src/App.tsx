@@ -1,6 +1,10 @@
 import { CRM } from "@/components/atomic-crm/root/CRM";
 import { LoginPage } from "@/components/atomic-crm/login/LoginPage";
 import { RuntimeAdminPage } from "@/components/atomic-crm/admin/RuntimeAdminPage";
+import { EmbeddedLayout } from "@/components/atomic-crm/layout/EmbeddedLayout";
+import { applyRuntimeBranding } from "@/runtime-branding";
+import { useEffect } from "react";
+import { BrowserRouter } from "react-router-dom";
 
 /**
  * Application entry point
@@ -34,17 +38,47 @@ import { RuntimeAdminPage } from "@/components/atomic-crm/admin/RuntimeAdminPage
  * );
  */
 const App = () => {
-  if (
+  const isRuntimeAdmin =
     window.location.pathname === "/admin" ||
-    window.location.pathname.startsWith("/admin/")
-  ) {
+    window.location.pathname.startsWith("/admin/");
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/runtime", { signal: controller.signal })
+      .then((response) => response.json())
+      .then((runtime) =>
+        applyRuntimeBranding(runtime, { injectCode: !isRuntimeAdmin }),
+      )
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [isRuntimeAdmin]);
+
+  if (isRuntimeAdmin) {
     return <RuntimeAdminPage />;
   }
-  const isCrmApp =
+  const isEmbeddedApp =
     window.location.pathname === "/app" ||
     window.location.pathname.startsWith("/app/");
+  const isWorkspace =
+    window.location.pathname === "/workspace" ||
+    window.location.pathname.startsWith("/workspace/");
 
-  return isCrmApp ? <CRM /> : <LoginPage redirectTo="/app" />;
+  if (isEmbeddedApp) {
+    return (
+      <BrowserRouter basename="/app">
+        <CRM layout={EmbeddedLayout} />
+      </BrowserRouter>
+    );
+  }
+
+  if (isWorkspace) {
+    return (
+      <BrowserRouter basename="/workspace">
+        <CRM />
+      </BrowserRouter>
+    );
+  }
+
+  return <LoginPage redirectTo="/workspace" />;
 };
 
 export default App;

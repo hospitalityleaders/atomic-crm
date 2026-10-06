@@ -5,8 +5,9 @@ import {
   MessagesSquare,
   UsersRound,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { usePublicTheme } from "@/hooks/use-public-theme";
+import { applyRuntimeBranding } from "@/runtime-branding";
 
 type NavigationItem = {
   id?: number;
@@ -23,6 +24,15 @@ type PublicRuntime = {
   landing_subtitle: string;
   header_background_color: string;
   header_text_color: string;
+  accent_color: string;
+  site_icon_url: string;
+  og_image_url: string;
+  login_url: string;
+  signup_url: string;
+  hero_button_text: string;
+  hero_button_url: string;
+  head_code: string;
+  footer_code: string;
   privacy_url: string;
   cookie_url: string;
   terms_url: string;
@@ -34,8 +44,11 @@ type PublicRuntime = {
   signupUrl?: string;
 };
 
-export const LoginPage = ({ redirectTo = "/app" }: { redirectTo?: string }) => {
-  const returnTo = encodeURIComponent(redirectTo);
+export const LoginPage = ({
+  redirectTo = "/workspace",
+}: {
+  redirectTo?: string;
+}) => {
   const { theme, setTheme } = usePublicTheme();
   const [runtime, setRuntime] = useState<PublicRuntime>({
     meta_title: "Holedo CRM",
@@ -45,6 +58,15 @@ export const LoginPage = ({ redirectTo = "/app" }: { redirectTo?: string }) => {
       "Keep leads, deals and every customer conversation together in one clear workspace built for hospitality teams.",
     header_background_color: "#384677",
     header_text_color: "#ffffff",
+    accent_color: "#32a3fd",
+    site_icon_url: "/assets/branding/1gc-holedo-icon-for-dark-bg.png",
+    og_image_url: "",
+    login_url: "",
+    signup_url: "",
+    hero_button_text: "Start Now",
+    hero_button_url: "",
+    head_code: "",
+    footer_code: "",
     privacy_url: "https://www.iubenda.com/privacy-policy/84980546",
     cookie_url: "https://www.iubenda.com/privacy-policy/84980546/cookie-policy",
     terms_url: "https://www.iubenda.com/terms-and-conditions/84980546",
@@ -77,8 +99,14 @@ export const LoginPage = ({ redirectTo = "/app" }: { redirectTo?: string }) => {
       },
     ],
   });
-  const loginUrl = runtime.loginUrl || `/auth/login?returnTo=${returnTo}`;
-  const signupUrl = runtime.signupUrl || `/auth/register?returnTo=${returnTo}`;
+  const returnTo = encodeURIComponent(redirectTo);
+  const loginUrl =
+    runtime.loginUrl || runtime.login_url || `/auth/login?returnTo=${returnTo}`;
+  const signupUrl =
+    runtime.signupUrl ||
+    runtime.signup_url ||
+    `/auth/login?returnTo=${returnTo}`;
+  const heroButtonUrl = runtime.hero_button_url || signupUrl;
   useEffect(() => {
     fetch("/api/runtime")
       .then((response) => response.json())
@@ -86,17 +114,18 @@ export const LoginPage = ({ redirectTo = "/app" }: { redirectTo?: string }) => {
       .catch(() => undefined);
   }, []);
   useEffect(() => {
-    document.title = runtime.meta_title;
-    let description = document.head.querySelector<HTMLMetaElement>(
-      'meta[name="description"]',
-    );
-    if (!description) {
-      description = document.createElement("meta");
-      description.name = "description";
-      document.head.appendChild(description);
-    }
-    description.content = runtime.meta_description;
-  }, [runtime.meta_description, runtime.meta_title]);
+    applyRuntimeBranding(runtime);
+  }, [runtime]);
+  useEffect(() => {
+    if (runtime.authMode !== "oidc") return;
+    const controller = new AbortController();
+    fetch("/api/session", { signal: controller.signal })
+      .then((response) => {
+        if (response.ok) window.location.replace(redirectTo);
+      })
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [redirectTo, runtime.authMode]);
   useEffect(() => {
     if (!runtime.privacy_settings_enabled) return;
     const existing = document.querySelector<HTMLScriptElement>(
@@ -115,7 +144,10 @@ export const LoginPage = ({ redirectTo = "/app" }: { redirectTo?: string }) => {
     .sort((a, b) => a.sort_order - b.sort_order);
 
   return (
-    <main className="min-h-screen bg-[#f4f6f8] text-[#26324a] transition-colors dark:bg-[#15181f] dark:text-[#f5f7fb]">
+    <main
+      className="min-h-screen bg-[#f4f6f8] text-[#26324a] transition-colors dark:bg-[#15181f] dark:text-[#f5f7fb]"
+      style={{ "--holedo-accent": runtime.accent_color } as CSSProperties}
+    >
       <header
         style={{
           backgroundColor: runtime.header_background_color,
@@ -137,7 +169,7 @@ export const LoginPage = ({ redirectTo = "/app" }: { redirectTo?: string }) => {
                 <a
                   key={`${item.label}-${item.url}`}
                   href={item.url}
-                  className="flex shrink-0 items-center border-b-2 border-transparent px-3 text-[13px] font-semibold opacity-70 transition hover:border-[#32a3fd] hover:opacity-100"
+                  className="holedo-nav-link flex shrink-0 items-center border-b-2 border-transparent px-3 text-[13px] font-semibold opacity-70 transition hover:opacity-100"
                 >
                   {item.label}
                 </a>
@@ -153,7 +185,7 @@ export const LoginPage = ({ redirectTo = "/app" }: { redirectTo?: string }) => {
             </a>
             <a
               href={signupUrl}
-              className="flex items-center bg-[#32a3fd] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-[#178fe8]"
+              className="flex items-center bg-[var(--holedo-accent)] px-4 text-[13px] font-semibold text-white transition hover:brightness-90"
             >
               Sign Up Free
             </a>
@@ -162,9 +194,9 @@ export const LoginPage = ({ redirectTo = "/app" }: { redirectTo?: string }) => {
       </header>
 
       <section className="relative overflow-hidden bg-[#384677] text-white">
-        <div className="relative mx-auto grid max-w-7xl gap-14 px-6 pb-20 pt-12 lg:grid-cols-[1.05fr_.95fr] lg:px-10 lg:pb-24 lg:pt-16">
+        <div className="relative mx-auto grid max-w-7xl gap-14 px-6 pb-16 pt-8 lg:grid-cols-[1.05fr_.95fr] lg:px-10 lg:pb-20 lg:pt-10">
           <div className="max-w-3xl">
-            <p className="mb-5 text-sm font-semibold uppercase tracking-[0.22em] text-[#32a3fd]">
+            <p className="mb-[5px] text-sm font-semibold uppercase tracking-[0.08em] text-[var(--holedo-accent)]">
               Holedo CRM
             </p>
             <h1 className="text-5xl font-bold leading-[1.06] tracking-tight sm:text-6xl">
@@ -173,21 +205,13 @@ export const LoginPage = ({ redirectTo = "/app" }: { redirectTo?: string }) => {
             <p className="mt-7 max-w-2xl text-xl leading-8 text-white/76">
               {runtime.landing_subtitle}
             </p>
-            <div className="mt-10 flex flex-wrap gap-4">
+            <div className="mt-10 flex flex-wrap">
               <a
-                href={signupUrl}
-                className="inline-flex items-center gap-2 rounded-[2px] bg-[#32a3fd] px-6 py-3.5 font-semibold text-white shadow-lg shadow-black/10 transition-colors hover:bg-[#178fe8]"
+                href={heroButtonUrl}
+                className="inline-flex items-center gap-2 rounded-[2px] bg-[var(--holedo-accent)] px-6 py-3.5 font-semibold text-white shadow-lg shadow-black/10 transition hover:brightness-90"
               >
-                {runtime.authMode === "demo"
-                  ? "Open the CRM"
-                  : "Create your workspace"}{" "}
+                {runtime.hero_button_text || "Start Now"}{" "}
                 <ArrowRight className="h-4 w-4" />
-              </a>
-              <a
-                href={loginUrl}
-                className="rounded-[2px] border border-white/30 px-6 py-3.5 font-semibold text-white hover:bg-white/10"
-              >
-                Sign in to CRM
               </a>
             </div>
           </div>
@@ -253,7 +277,7 @@ export const LoginPage = ({ redirectTo = "/app" }: { redirectTo?: string }) => {
               key={String(title)}
               className="rounded-[2px] border border-[#e2e7ef] bg-white p-7 shadow-sm dark:border-white/10 dark:bg-[#20242d]"
             >
-              <FeatureIcon className="mb-5 h-8 w-8 text-[#32a3fd]" />
+              <FeatureIcon className="mb-5 h-8 w-8 text-[var(--holedo-accent)]" />
               <h2 className="text-xl font-semibold">{String(title)}</h2>
               <p className="mt-3 leading-7 text-[#68748a] dark:text-[#a8b0bf]">
                 {String(copy)}

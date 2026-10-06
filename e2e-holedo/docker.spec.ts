@@ -11,11 +11,13 @@ async function signIn(page: Page, email: string, password: string) {
   await page.locator('input[name="username"]').fill(email);
   await page.locator('input[name="password"]').fill(password);
   await page.locator("#kc-login").click();
-  await expect.poll(() => new URL(page.url()).pathname).toBe("/app");
+  await expect
+    .poll(() => new URL(page.url()).pathname)
+    .toBe("/workspace/deals");
   await expect(
     page.getByRole("button", { name: "Open account menu" }),
   ).toBeVisible();
-  expect(new URL(page.url()).pathname).toBe("/app");
+  expect(new URL(page.url()).pathname).toBe("/workspace/deals");
   await expect(page.getByRole("link", { name: "Get started" })).toHaveCount(0);
 }
 
@@ -78,11 +80,11 @@ test("Holedo public theme and token-only CRM admin work", async ({ page }) => {
     /1gc-holedo-icon-for-dark-bg\.png/,
   );
   await expect(page.locator("header")).toHaveCSS("border-bottom-width", "0px");
-  await expect(
-    page.getByRole("link", {
-      name: /Create your workspace|Open the CRM/,
-    }),
-  ).toHaveCSS("border-radius", "2px");
+  await expect(page.getByRole("link", { name: "Start Now" })).toHaveCSS(
+    "border-radius",
+    "2px",
+  );
+  await expect(page.getByRole("link", { name: "Start Now" })).toHaveCount(1);
   await expect(
     page.getByRole("link", { name: "Privacy", exact: true }),
   ).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
@@ -105,6 +107,19 @@ test("Holedo public theme and token-only CRM admin work", async ({ page }) => {
   await expect(
     page.getByLabel("Header background colour hex value"),
   ).toHaveValue("#384677");
+  await expect(page.getByLabel("Accent colour hex value")).toHaveValue(
+    "#32a3fd",
+  );
+  await expect(page.getByLabel("Site icon URL")).toHaveValue(
+    "/assets/branding/1gc-holedo-icon-for-dark-bg.png",
+  );
+  await expect(page.getByLabel("Open Graph image URL")).toBeVisible();
+  await expect(page.getByLabel("Hero button text")).toHaveValue("Start Now");
+  await expect(page.getByLabel("Hero button URL")).toBeVisible();
+  await expect(page.getByLabel("Login URL")).toBeVisible();
+  await expect(page.getByLabel("Sign-up URL")).toBeVisible();
+  await expect(page.getByLabel("Header code injection")).toBeVisible();
+  await expect(page.getByLabel("Footer code injection")).toBeVisible();
 });
 
 test("Holedo identity, workspaces and storage work together", async ({
@@ -123,6 +138,25 @@ test("Holedo identity, workspaces and storage work together", async ({
     expect(ownerSession.body.data.workspaceType).toBe("personal");
     expect(ownerSession.body.data.role).toBe("owner");
     expect(ownerSession.body.data.platformAdmin).toBe(true);
+
+    await expect(owner.page.locator("header")).toBeVisible();
+    await expect(owner.page.locator('header img[alt="Holedo"]')).toBeVisible();
+    await expect(
+      owner.page.getByRole("link", { name: "Dashboard" }),
+    ).toHaveCount(0);
+    await expect(owner.page.getByText("What's next?")).toHaveCount(0);
+    await expect(owner.page.getByText("Install Atomic CRM")).toHaveCount(0);
+
+    await owner.page.goto("/app");
+    await expect
+      .poll(() => new URL(owner.page.url()).pathname)
+      .toBe("/app/deals");
+    await expect(owner.page.locator("header")).toHaveCount(0);
+    await expect(owner.page.getByText(/Deal bin/i)).toBeVisible();
+    await owner.page.goto("/workspace");
+    await expect
+      .poll(() => new URL(owner.page.url()).pathname)
+      .toBe("/workspace/deals");
 
     const runtime = await request(owner.page, "/api/admin/runtime");
     expect(runtime.status).toBe(200);
@@ -228,7 +262,7 @@ test("Holedo identity, workspaces and storage work together", async ({
       .click();
     await expect.poll(() => new URL(owner.page.url()).pathname).toBe("/");
 
-    await owner.page.goto("/auth/login?returnTo=%2Fapp");
+    await owner.page.goto("/auth/login?returnTo=%2Fworkspace");
     await expect(owner.page.locator('input[name="username"]')).toBeVisible();
   } finally {
     await owner.context.close();

@@ -170,9 +170,7 @@ describe("DataImportButton", () => {
     expect(companies[0].size).toBe(50);
   });
 
-  it("hides a resource the running app does not register", async () => {
-    // The mobile app has no deals screens, so importing deals would create
-    // records the user could never see.
+  it("offers deals in the mobile app", async () => {
     mockIsMobile.mockReturnValue(true);
     const screen = await render(<AllResources />);
 
@@ -181,16 +179,16 @@ describe("DataImportButton", () => {
     const options = screen.getByRole("listbox");
 
     await expect.element(options.getByText("Contacts")).toBeVisible();
-    await expect.element(options.getByText("Deals")).not.toBeInTheDocument();
+    await expect.element(options.getByText("Deals")).toBeVisible();
   });
 
-  it("renders nothing for a resource the running app does not register", async () => {
+  it("renders the deal importer in the mobile app", async () => {
     mockIsMobile.mockReturnValue(true);
     const screen = await render(<SingleResource resource="deals" />);
 
     await expect
       .element(screen.getByRole("button", { name: "Import CSV" }))
-      .not.toBeInTheDocument();
+      .toBeVisible();
   });
 
   it("imports deals, reusing one company and defaulting a missing stage", async () => {

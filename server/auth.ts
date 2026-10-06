@@ -84,13 +84,13 @@ function parseCookies(req: Request) {
   );
 }
 
-function cleanReturnTo(value: unknown) {
-  const candidate = String(value ?? "/app");
+export function cleanReturnTo(value: unknown) {
+  const candidate = String(value ?? "/workspace");
   return candidate.startsWith("/") &&
     !candidate.startsWith("//") &&
     !candidate.startsWith("/auth/")
     ? candidate.slice(0, 1500)
-    : "/app";
+    : "/workspace";
 }
 
 function callbackUrl() {
@@ -137,7 +137,11 @@ async function getDemoSession(): Promise<CrmSession> {
          SET email = EXCLUDED.email, display_name = EXCLUDED.display_name,
              platform_admin = TRUE, last_login_at = NOW(), updated_at = NOW()
        RETURNING id, email, display_name`,
-      [process.env.ADMIN_EMAIL || "service@holedo.email"],
+      [
+        process.env.DEMO_USER_EMAIL ||
+          process.env.ADMIN_EMAIL ||
+          "service@holedo.email",
+      ],
     );
     const user = userResult.rows[0];
     await client.query(
