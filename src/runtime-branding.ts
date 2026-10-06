@@ -4,6 +4,8 @@ export type RuntimeBranding = {
   head_code?: string;
   header_background_color?: string;
   header_text_color?: string;
+  hero_background_color?: string;
+  hero_height?: number;
   meta_description?: string;
   meta_title?: string;
   og_image_url?: string;
@@ -67,6 +69,18 @@ export function applyRuntimeBranding(
     document.documentElement.style.setProperty(
       "--holedo-header-text",
       runtime.header_text_color,
+    );
+  }
+  if (runtime.hero_background_color) {
+    document.documentElement.style.setProperty(
+      "--holedo-hero-background",
+      runtime.hero_background_color,
+    );
+  }
+  if (runtime.hero_height) {
+    document.documentElement.style.setProperty(
+      "--holedo-hero-height",
+      `${runtime.hero_height}px`,
     );
   }
 

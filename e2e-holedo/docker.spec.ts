@@ -80,6 +80,14 @@ test("Holedo public theme and token-only CRM admin work", async ({ page }) => {
     /1gc-holedo-icon-for-dark-bg\.png/,
   );
   await expect(page.locator("header")).toHaveCSS("border-bottom-width", "0px");
+  await expect(page.getByText("Holedo CRM", { exact: true }).last()).toHaveCSS(
+    "letter-spacing",
+    "normal",
+  );
+  await expect(page.locator("[data-holedo-hero]")).toHaveCSS(
+    "background-color",
+    "rgb(56, 70, 119)",
+  );
   await expect(page.getByRole("link", { name: "Start Now" })).toHaveCSS(
     "border-radius",
     "2px",
@@ -110,6 +118,10 @@ test("Holedo public theme and token-only CRM admin work", async ({ page }) => {
   await expect(page.getByLabel("Accent colour hex value")).toHaveValue(
     "#32a3fd",
   );
+  await expect(page.getByLabel("Hero background colour hex value")).toHaveValue(
+    "#384677",
+  );
+  await expect(page.getByLabel("Hero section height (px)")).toHaveValue("560");
   await expect(page.getByLabel("Site icon URL")).toHaveValue(
     "/assets/branding/1gc-holedo-icon-for-dark-bg.png",
   );
