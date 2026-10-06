@@ -13,9 +13,9 @@ It provides:
 - PostgreSQL tenant isolation with row-level security; and
 - private S3-compatible attachment storage.
 
-The public product page is served at `/`. The authenticated workspace is served at `/app` with its own CRM header, workspace switcher and avatar menu.
+The public product page is served at `/`. The authenticated browser workspace is served at `/workspace` with its CRM header, workspace switcher and avatar menu. The matching `/app` route is frameless for the Holedo Flutter web view. Both open the Deals board by default.
 
-The public page and CRM support light, dark and automatic themes. Runtime presentation settings are available at `/admin/` through a separate server-side admin token, so administrators do not need to sign in to Holedo to edit them.
+The public page and CRM support light, dark and automatic themes. Runtime presentation settings are available at `/admin/` through a separate server-side admin token, so administrators do not need to sign in to Holedo to edit the homepage, colours, icon, social preview, access links or trusted header/footer code injection.
 
 ## Run locally
 
@@ -48,7 +48,7 @@ npm run build
 npx playwright test --config playwright.holedo.config.ts
 ```
 
-The Holedo browser test covers the public page, Keycloak login, `/app` shell, personal and company workspaces, the one-company membership constraint, platform administration, S3 upload/download and global logout.
+The Holedo browser test covers the public page, Keycloak login, `/workspace` browser shell, frameless `/app` shell, personal and company workspaces, the one-company membership constraint, platform administration, S3 upload/download and global logout.
 
 ## Upstream and license
 

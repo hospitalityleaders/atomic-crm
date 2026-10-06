@@ -24,10 +24,8 @@ const Header = () => {
   const location = useLocation();
   const translate = useTranslate();
 
-  let currentPath: string | boolean = "/";
-  if (matchPath("/", location.pathname)) {
-    currentPath = "/";
-  } else if (matchPath("/contacts/*", location.pathname)) {
+  let currentPath: string | boolean;
+  if (matchPath("/contacts/*", location.pathname)) {
     currentPath = "/contacts";
   } else if (matchPath("/companies/*", location.pathname)) {
     currentPath = "/companies";
@@ -40,27 +38,28 @@ const Header = () => {
   return (
     <>
       <nav className="grow">
-        <header className="bg-[#384677] text-white shadow-sm">
+        <header
+          className="shadow-sm"
+          style={{
+            backgroundColor: "var(--holedo-header-background, #384677)",
+            color: "var(--holedo-header-text, #ffffff)",
+          }}
+        >
           <div className="px-5">
             <div className="flex justify-between items-center flex-1">
               <Link
                 to="/"
-                className="flex items-center gap-2 text-secondary-foreground no-underline"
+                className="flex w-14 shrink-0 items-center no-underline"
               >
+                <span className="sr-only">{title}</span>
                 <img
-                  className="h-8 w-8 object-contain"
+                  className="h-8 w-12 object-contain object-left"
                   src="/assets/branding/1gc-holedo-icon-for-dark-bg.png"
-                  alt={title}
+                  alt="Holedo"
                 />
-                <h1 className="text-xl font-semibold">{title}</h1>
               </Link>
               <div>
                 <nav className="flex">
-                  <NavigationTab
-                    label={translate("ra.page.dashboard")}
-                    to="/"
-                    isActive={currentPath === "/"}
-                  />
                   <NavigationTab
                     label={translate("resources.contacts.name", {
                       smart_count: 2,
@@ -119,10 +118,10 @@ const NavigationTab = ({
 }) => (
   <Link
     to={to}
-    className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 ${
+    className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 text-[var(--holedo-header-text,#ffffff)] ${
       isActive
-        ? "text-secondary-foreground border-secondary-foreground"
-        : "text-secondary-foreground/70 border-transparent hover:text-secondary-foreground/80"
+        ? "border-[var(--holedo-accent)] opacity-100"
+        : "border-transparent opacity-70 hover:opacity-90"
     }`}
   >
     {label}

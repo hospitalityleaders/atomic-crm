@@ -1,5 +1,6 @@
 import "dotenv/config";
 import crypto from "node:crypto";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express, {
@@ -9,6 +10,7 @@ import express, {
 } from "express";
 import {
   beginOidcLogin,
+  cleanReturnTo,
   completeOidcLogin,
   currentAuthMode,
   getCrmSession,
@@ -25,6 +27,7 @@ import {
   uploadFile,
 } from "./object-storage.js";
 import { resourcesRouter } from "./resources.js";
+import { renderRuntimeHtml } from "./runtime-html.js";
 import { workspaceRouter } from "./workspace-routes.js";
 
 const app = express();
@@ -132,8 +135,11 @@ app.get("/api/runtime", async (_req, res) => {
   const [result, navigation] = await Promise.all([
     db.query(
       `SELECT meta_title, meta_description, landing_headline, landing_subtitle,
-              header_background_color, header_text_color, privacy_url,
-              cookie_url, terms_url, imprint_url, privacy_settings_enabled
+              header_background_color, header_text_color, accent_color,
+              site_icon_url, og_image_url, login_url, signup_url,
+              hero_button_text, hero_button_url, head_code, footer_code,
+              privacy_url, cookie_url, terms_url, imprint_url,
+              privacy_settings_enabled
        FROM crm_runtime_settings WHERE id = TRUE`,
     ),
     db.query(
@@ -141,28 +147,31 @@ app.get("/api/runtime", async (_req, res) => {
        FROM crm_navigation WHERE enabled = TRUE ORDER BY sort_order, id`,
     ),
   ]);
+  const settings = result.rows[0];
+  const loginUrl =
+    settings.login_url ||
+    (currentAuthMode() === "oidc"
+      ? "/auth/login?returnTo=%2Fworkspace"
+      : process.env.HOLEDO_LOGIN_URL || "https://www.holedo.com/login/");
+  const signupUrl =
+    settings.signup_url ||
+    (currentAuthMode() === "oidc"
+      ? "/auth/register?returnTo=%2Fworkspace"
+      : process.env.HOLEDO_SIGNUP_URL || "https://www.holedo.com/register/");
   res.json({
-    ...result.rows[0],
+    ...settings,
     navigation: navigation.rows,
     oidcConfigured: oidcConfigured(),
     authMode: currentAuthMode(),
-    loginUrl:
-      currentAuthMode() === "demo"
-        ? "/app"
-        : currentAuthMode() === "oidc"
-          ? "/auth/login?returnTo=%2Fapp"
-          : process.env.HOLEDO_LOGIN_URL || "https://www.holedo.com/login/",
-    signupUrl:
-      currentAuthMode() === "demo"
-        ? "/app"
-        : currentAuthMode() === "oidc"
-          ? "/auth/register?returnTo=%2Fapp"
-          : process.env.HOLEDO_SIGNUP_URL || "https://www.holedo.com/register/",
+    loginUrl,
+    signupUrl,
+    hero_button_url: settings.hero_button_url || signupUrl,
   });
 });
 
 app.get("/auth/login", (req, res) => {
-  if (currentAuthMode() === "demo") return res.redirect(302, "/app");
+  if (currentAuthMode() === "demo")
+    return res.redirect(302, cleanReturnTo(req.query.returnTo));
   if (!oidcConfigured())
     return res.redirect(
       302,
@@ -171,7 +180,8 @@ app.get("/auth/login", (req, res) => {
   return beginOidcLogin(req, res);
 });
 app.get("/auth/register", (req, res) => {
-  if (currentAuthMode() === "demo") return res.redirect(302, "/app");
+  if (currentAuthMode() === "demo")
+    return res.redirect(302, cleanReturnTo(req.query.returnTo));
   if (!oidcConfigured())
     return res.redirect(
       302,
@@ -255,6 +265,14 @@ app.put(
       "meta_description",
       "landing_headline",
       "landing_subtitle",
+      "site_icon_url",
+      "og_image_url",
+      "login_url",
+      "signup_url",
+      "hero_button_text",
+      "hero_button_url",
+      "head_code",
+      "footer_code",
       "privacy_url",
       "cookie_url",
       "terms_url",
@@ -269,6 +287,7 @@ app.put(
       req.body?.header_text_color,
       "#ffffff",
     );
+    const accentColor = runtimeColor(req.body?.accent_color, "#32a3fd");
     const privacySettingsEnabled = req.body?.privacy_settings_enabled !== false;
     const navigation = Array.isArray(req.body?.navigation)
       ? req.body.navigation.slice(0, 30)
@@ -279,15 +298,20 @@ app.put(
       const settings = await client.query(
         `UPDATE crm_runtime_settings SET
         meta_title = $1, meta_description = $2, landing_headline = $3,
-        landing_subtitle = $4, privacy_url = $5, cookie_url = $6,
-        terms_url = $7, imprint_url = $8, header_background_color = $9,
-        header_text_color = $10, privacy_settings_enabled = $11,
+        landing_subtitle = $4, site_icon_url = $5, og_image_url = $6,
+        login_url = $7, signup_url = $8, hero_button_text = $9,
+        hero_button_url = $10, head_code = $11, footer_code = $12,
+        privacy_url = $13, cookie_url = $14, terms_url = $15,
+        imprint_url = $16, header_background_color = $17,
+        header_text_color = $18, accent_color = $19,
+        privacy_settings_enabled = $20,
         updated_at = NOW()
        WHERE id = TRUE RETURNING *`,
         [
           ...values,
           headerBackgroundColor,
           headerTextColor,
+          accentColor,
           privacySettingsEnabled,
         ],
       );
@@ -375,8 +399,22 @@ app.get("/api/files/:id", requireSession, async (req, res) => {
 });
 
 const dist = path.join(root, "dist");
+const indexHtml = readFile(path.join(dist, "index.html"), "utf8");
 app.use(express.static(dist, { index: false }));
-app.get("*splat", (_req, res) => res.sendFile(path.join(dist, "index.html")));
+app.get("*splat", async (req, res) => {
+  const [source, runtime] = await Promise.all([
+    indexHtml,
+    db.query(
+      `SELECT meta_title, meta_description, header_background_color,
+              site_icon_url, og_image_url, head_code, footer_code
+       FROM crm_runtime_settings WHERE id = TRUE`,
+    ),
+  ]);
+  const injectCode = !(req.path === "/admin" || req.path.startsWith("/admin/"));
+  res
+    .type("html")
+    .send(renderRuntimeHtml(source, runtime.rows[0] ?? {}, injectCode));
+});
 
 app.use(
   (

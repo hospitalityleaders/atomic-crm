@@ -6,7 +6,7 @@ import type {
 } from "ra-core";
 import { CustomRoutes, localStorageStore, Resource } from "ra-core";
 import { useEffect, useMemo } from "react";
-import { Route } from "react-router";
+import { Navigate, Route } from "react-router";
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
@@ -14,8 +14,6 @@ import { Admin } from "@/components/admin/admin";
 
 import companies from "../companies";
 import contacts from "../contacts";
-import { Dashboard } from "../dashboard/Dashboard";
-import { MobileDashboard } from "../dashboard/MobileDashboard";
 import deals from "../deals";
 import { Layout } from "../layout/Layout";
 import { MobileLayout } from "../layout/MobileLayout";
@@ -52,10 +50,10 @@ import { useIsMobile } from "@/hooks/use-mobile.ts";
 import { MobileTasksList } from "../tasks/MobileTasksList.tsx";
 import { ContactListMobile } from "../contacts/ContactList.tsx";
 import { ContactShow } from "../contacts/ContactShow.tsx";
-import { CompanyShow } from "../companies/CompanyShow.tsx";
 import { NoteShowPage } from "../notes/NoteShowPage.tsx";
 
 const defaultStore = localStorageStore(undefined, "CRM");
+const DealsRedirect = () => <Navigate to="/deals" replace />;
 
 export type CRMProps = {
   dataProvider?: CrmDataProvider;
@@ -234,7 +232,7 @@ const DesktopAdmin = (
   return (
     <Admin
       layout={props.layout ?? Layout}
-      dashboard={props.dashboard ?? Dashboard}
+      dashboard={props.dashboard ?? DealsRedirect}
       {...props}
     >
       <CustomRoutes>
@@ -284,7 +282,7 @@ const MobileAdmin = (
       <Admin
         queryClient={queryClient}
         layout={props.layout ?? MobileLayout}
-        dashboard={props.dashboard ?? MobileDashboard}
+        dashboard={props.dashboard ?? DealsRedirect}
         {...props}
       >
         <CustomRoutes>
@@ -302,7 +300,8 @@ const MobileAdmin = (
         >
           <Route path=":id/notes/:noteId" element={<NoteShowPage />} />
         </Resource>
-        <Resource name="companies" show={CompanyShow} />
+        <Resource name="companies" {...companies} />
+        <Resource name="deals" {...deals} />
         <Resource name="tasks" list={MobileTasksList} />
       </Admin>
     </PersistQueryClientProvider>
