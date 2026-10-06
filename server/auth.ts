@@ -349,9 +349,16 @@ export async function completeOidcLogin(req: Request, res: Response) {
            AND i.revoked_at IS NULL
            AND i.expires_at > NOW()
            AND w.workspace_type = 'company'
+           AND NOT EXISTS (
+             SELECT 1
+             FROM crm_workspace_members membership
+             WHERE membership.user_id = $2
+               AND membership.workspace_type = 'company'
+               AND membership.status IN ('active', 'suspended')
+           )
          ORDER BY i.created_at
          LIMIT 1`,
-        [email],
+        [email, userId],
       );
       if (invitation.rows[0]) {
         const invited = invitation.rows[0];
