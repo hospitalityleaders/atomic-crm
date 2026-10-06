@@ -6,6 +6,7 @@ export type RuntimeBranding = {
   header_text_color?: string;
   hero_background_color?: string;
   hero_height?: number;
+  eyebrow_color?: string;
   meta_description?: string;
   meta_title?: string;
   og_image_url?: string;
@@ -81,6 +82,12 @@ export function applyRuntimeBranding(
     document.documentElement.style.setProperty(
       "--holedo-hero-height",
       `${runtime.hero_height}px`,
+    );
+  }
+  if (runtime.eyebrow_color) {
+    document.documentElement.style.setProperty(
+      "--holedo-eyebrow",
+      runtime.eyebrow_color,
     );
   }
 

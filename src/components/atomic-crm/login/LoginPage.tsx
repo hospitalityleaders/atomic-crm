@@ -26,6 +26,7 @@ type PublicRuntime = {
   header_text_color: string;
   hero_background_color: string;
   hero_height: number;
+  eyebrow_color: string;
   accent_color: string;
   site_icon_url: string;
   og_image_url: string;
@@ -33,6 +34,7 @@ type PublicRuntime = {
   signup_url: string;
   hero_button_text: string;
   hero_button_url: string;
+  hero_image_url: string;
   head_code: string;
   footer_code: string;
   privacy_url: string;
@@ -62,6 +64,7 @@ export const LoginPage = ({
     header_text_color: "#ffffff",
     hero_background_color: "#384677",
     hero_height: 560,
+    eyebrow_color: "#32a3fd",
     accent_color: "#32a3fd",
     site_icon_url: "/assets/branding/1gc-holedo-icon-for-dark-bg.png",
     og_image_url: "",
@@ -69,6 +72,7 @@ export const LoginPage = ({
     signup_url: "",
     hero_button_text: "Start Now",
     hero_button_url: "",
+    hero_image_url: "",
     head_code: "",
     footer_code: "",
     privacy_url: "https://www.iubenda.com/privacy-policy/84980546",
@@ -168,6 +172,7 @@ export const LoginPage = ({
           "--holedo-accent": runtime.accent_color,
           "--holedo-header-text": runtime.header_text_color,
           "--holedo-hero-height": `${runtime.hero_height}px`,
+          "--holedo-eyebrow": runtime.eyebrow_color,
         } as CSSProperties
       }
     >
@@ -231,7 +236,7 @@ export const LoginPage = ({
       >
         <div className="relative mx-auto grid max-w-7xl gap-14 px-6 pb-16 pt-8 lg:min-h-[var(--holedo-hero-height)] lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:px-10 lg:py-10">
           <div className="max-w-3xl">
-            <p className="mb-[5px] text-sm font-semibold uppercase text-[var(--holedo-accent)]">
+            <p className="mb-3 text-[18px] font-[650] uppercase leading-[1.1] tracking-[0.13em] text-[var(--holedo-eyebrow)]">
               Holedo CRM
             </p>
             <h1 className="text-5xl font-bold leading-[1.06] tracking-tight sm:text-6xl">
@@ -251,40 +256,51 @@ export const LoginPage = ({
             </div>
           </div>
 
-          <div className="rounded-[2px] border border-white/15 bg-white/10 p-5 shadow-2xl backdrop-blur-sm">
-            <div className="rounded-[2px] bg-[#f3f5f9] p-5 text-[#26324a] dark:bg-[#20242d] dark:text-[#f5f7fb]">
-              <div className="mb-4 flex items-center justify-between">
-                <span className="font-semibold">Sales pipeline</span>
-                <span className="rounded-full bg-[#e9f7d7] px-3 py-1 text-xs font-semibold text-[#4f8410]">
-                  12 active
-                </span>
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                {["New lead", "Proposal", "Accepted"].map((stage, index) => (
-                  <div
-                    key={stage}
-                    className="rounded-[2px] bg-white p-3 shadow-sm dark:bg-[#15181f]"
-                  >
-                    <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#758099]">
-                      {stage}
-                    </p>
-                    {[0, 1].slice(0, index === 2 ? 1 : 2).map((card) => (
-                      <div
-                        key={card}
-                        className="mb-2 rounded-[2px] border border-[#e0e5ed] p-2 last:mb-0 dark:border-white/10"
-                      >
-                        <div className="h-2 w-4/5 rounded bg-[#cbd3df]" />
-                        <div className="mt-2 h-2 w-1/2 rounded bg-[#e5e9ef]" />
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-              <div className="mt-5 border-t-2 border-[#fd3732] pt-3 text-center text-xs font-semibold uppercase tracking-wider text-[#fd3732]">
-                Archived deals stay in context
+          {runtime.hero_image_url ? (
+            <img
+              alt="CRM product preview"
+              className="w-full self-center object-contain lg:max-h-[calc(var(--holedo-hero-height)-5rem)]"
+              src={runtime.hero_image_url}
+            />
+          ) : (
+            <div
+              className="rounded-[2px] border border-white/15 bg-white/10 p-5 shadow-2xl backdrop-blur-sm"
+              data-holedo-default-hero-image
+            >
+              <div className="rounded-[2px] bg-[#f3f5f9] p-5 text-[#26324a] dark:bg-[#20242d] dark:text-[#f5f7fb]">
+                <div className="mb-4 flex items-center justify-between">
+                  <span className="font-semibold">Sales pipeline</span>
+                  <span className="rounded-full bg-[#e9f7d7] px-3 py-1 text-xs font-semibold text-[#4f8410]">
+                    12 active
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  {["New lead", "Proposal", "Accepted"].map((stage, index) => (
+                    <div
+                      key={stage}
+                      className="rounded-[2px] bg-white p-3 shadow-sm dark:bg-[#15181f]"
+                    >
+                      <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#758099]">
+                        {stage}
+                      </p>
+                      {[0, 1].slice(0, index === 2 ? 1 : 2).map((card) => (
+                        <div
+                          key={card}
+                          className="mb-2 rounded-[2px] border border-[#e0e5ed] p-2 last:mb-0 dark:border-white/10"
+                        >
+                          <div className="h-2 w-4/5 rounded bg-[#cbd3df]" />
+                          <div className="mt-2 h-2 w-1/2 rounded bg-[#e5e9ef]" />
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-5 border-t-2 border-[#fd3732] pt-3 text-center text-xs font-semibold uppercase tracking-wider text-[#fd3732]">
+                  Archived deals stay in context
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
 

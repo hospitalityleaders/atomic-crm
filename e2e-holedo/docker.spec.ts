@@ -82,8 +82,13 @@ test("Holedo public theme and token-only CRM admin work", async ({ page }) => {
   await expect(page.locator("header")).toHaveCSS("border-bottom-width", "0px");
   await expect(page.getByText("Holedo CRM", { exact: true }).last()).toHaveCSS(
     "letter-spacing",
-    "normal",
+    "2.34px",
   );
+  await expect(page.getByText("Holedo CRM", { exact: true }).last()).toHaveCSS(
+    "font-size",
+    "18px",
+  );
+  await expect(page.locator("[data-holedo-default-hero-image]")).toBeVisible();
   await expect(page.locator("[data-holedo-hero]")).toHaveCSS(
     "background-color",
     "rgb(56, 70, 119)",
@@ -121,7 +126,11 @@ test("Holedo public theme and token-only CRM admin work", async ({ page }) => {
   await expect(page.getByLabel("Hero background colour hex value")).toHaveValue(
     "#384677",
   );
+  await expect(
+    page.getByLabel("Homepage eyebrow colour hex value"),
+  ).toHaveValue("#32a3fd");
   await expect(page.getByLabel("Hero section height (px)")).toHaveValue("560");
+  await expect(page.getByLabel("Homepage hero image URL")).toBeVisible();
   await expect(page.getByLabel("Site icon URL")).toHaveValue(
     "/assets/branding/1gc-holedo-icon-for-dark-bg.png",
   );
@@ -132,6 +141,31 @@ test("Holedo public theme and token-only CRM admin work", async ({ page }) => {
   await expect(page.getByLabel("Sign-up URL")).toBeVisible();
   await expect(page.getByLabel("Header code injection")).toBeVisible();
   await expect(page.getByLabel("Footer code injection")).toBeVisible();
+
+  const testHeroImage =
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='500'%3E%3Crect width='800' height='500' fill='%237dc81b'/%3E%3C/svg%3E";
+  await page.getByLabel("Homepage hero image URL").fill(testHeroImage);
+  await page.getByLabel("Homepage eyebrow colour hex value").fill("#7dc81b");
+  await page.getByRole("button", { name: "Save settings" }).click();
+  await expect(page.getByRole("status")).toHaveText("Saved");
+
+  await page.goto("/");
+  await expect(
+    page.getByRole("img", { name: "CRM product preview" }),
+  ).toHaveAttribute("src", testHeroImage);
+  await expect(page.getByText("Holedo CRM", { exact: true }).last()).toHaveCSS(
+    "color",
+    "rgb(125, 200, 27)",
+  );
+
+  await page.goto("/admin/");
+  await expect(
+    page.getByRole("heading", { name: "Runtime settings" }),
+  ).toBeVisible();
+  await page.getByLabel("Homepage hero image URL").fill("");
+  await page.getByLabel("Homepage eyebrow colour hex value").fill("#32a3fd");
+  await page.getByRole("button", { name: "Save settings" }).click();
+  await expect(page.getByRole("status")).toHaveText("Saved");
 });
 
 test("Holedo identity, workspaces and storage work together", async ({
